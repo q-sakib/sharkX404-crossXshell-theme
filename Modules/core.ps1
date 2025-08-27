@@ -103,14 +103,39 @@ function dev { nodemon index.js }
 
 # 🐳 Docker Tools
 # 🧠 Help reminder
+# Write-Host "`n💡 Terminal Ready! Try:" -ForegroundColor Cyan
+# Write-Host "  → live            # Launch live server" -ForegroundColor Gray
+# Write-Host "  → deploy-*        # Deploy to Vercel, Firebase, or Heroku" -ForegroundColor Gray
+# Write-Host "  → copilot-auth    # GitHub Copilot CLI login" -ForegroundColor Gray
+# Write-Host "  → hf-login        # Hugging Face CLI login" -ForegroundColor Gray
+# Write-Host "  → api <url>       # Test REST API via httpie" -ForegroundColor Red
+# Write-Host "  → fzf             # Start fuzzy file search" -ForegroundColor Gray
+# Write-Host "  → deletehistory   # Delete selected history from search" -ForegroundColor Gray
+# Write-Host "  → basefuncs       # Show list of some custom utility functions" -ForegroundColor Gray
+# Write-Host "  → clifuncs        # Show list of all dev, test, utility & CLI functions" -ForegroundColor Gray
+
+
+
 Write-Host "`n💡 Terminal Ready! Try:" -ForegroundColor Cyan
-Write-Host "  → live         # Launch live server" -ForegroundColor Gray
-Write-Host "  → deploy-*     # Deploy to Vercel, Firebase, or Heroku" -ForegroundColor Gray
-Write-Host "  → copilot-auth # GitHub Copilot CLI login" -ForegroundColor Gray
-Write-Host "  → hf-login     # Hugging Face CLI login" -ForegroundColor Gray
-Write-Host "  → api <url>    # Test REST API via httpie" -ForegroundColor Gray
-Write-Host "  → fzf          # Start fuzzy file search" -ForegroundColor Gray
-Write-Host "  → basefuncs     # Show list of some custom utility functions" -ForegroundColor Gray
-Write-Host "  → clifuncs     # Show list of all dev, test, utility & CLI functions" -ForegroundColor Gray
+
+# Dev commands
+Write-Host "  → live            # Launch live server" -ForegroundColor Green
+Write-Host "  → deploy-*        # Deploy to Vercel, Firebase, or Heroku" -ForegroundColor DarkCyan
+
+# Auth
+Write-Host "  → copilot-auth    # GitHub Copilot CLI login" -ForegroundColor Gray
+Write-Host "  → hf-login        # Hugging Face CLI login" -ForegroundColor White
+
+# API / Testing
+Write-Host "  → api <url>       # Test REST API via httpie" -ForegroundColor Green
+
+# Tools & utilities
+Write-Host "  → fzf             # Start fuzzy file search" -ForegroundColor DarkGray
+Write-Host "  → deletehistory   # Delete selected history from search" -ForegroundColor Red
+
+# Function helpers
+Write-Host "  → basefuncs       # Show list of some custom utility functions" -ForegroundColor Blue 
+Write-Host "  → clifuncs        # Show list of all dev, test, utility & CLI functions" -ForegroundColor Magenta 
+
 
 # ─── END PROFILE ───────────────────────────────────────────────────────

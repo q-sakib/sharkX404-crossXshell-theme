@@ -165,3 +165,27 @@ Let me know if you want:
 * a **quickstart script hosted on a CDN or GitHub raw URL**
 
 I can also generate a **VS Code DevContainer**, `.gitignore`, or project scaffold if you're treating this as a template repo.
+
+
+
+
+
+run this for history related issues and paths 
+$historyFiles = @(
+    "$env:USERPROFILE\.ps_history",
+    "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt",
+    "$env:USERPROFILE\Documents\WindowsPowerShell\ConsoleHost_history.txt"
+)
+
+foreach ($file in $historyFiles) {
+    if (Test-Path $file) {
+        $lines = Get-Content $file
+        Write-Host "✅ Found history file:`n $file"
+        Write-Host "Total commands stored: $($lines.Count)"
+        Write-Host "Last 5 commands:"
+        $lines | Select-Object -Last 5 | ForEach-Object { Write-Host "  $_" }
+        Write-Host "`n"
+    } else {
+        Write-Host "❌ History file not found:`n $file`n"
+    }
+}
