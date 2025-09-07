@@ -1,5 +1,5 @@
 # Chaos characters and colors
-$chars = @("!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "=", "+", "[", "]", "{", "}", "|", "\", ":", ";", "'", "<", ">", ",", ".", "?", "/", "~", "`", "0","1","2","3","4","5","6","7","8","9","A","B","C","X","Z")
+$chars = @("!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "=", "+", "[", "]", "{", "}", "|", "\", ":", ";", "'", "<", ">", ",", ".", "?", "/", "~", [char]96, "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "X", "Z")
 $colors = @("Red", "Green", "Yellow", "Blue", "Cyan", "Magenta", "White")
 
 # Number of chaos lines
@@ -9,7 +9,7 @@ for ($i = 0; $i -lt $lines; $i++) {
     # Build a chaotic line
     $line = ""
     for ($j = 0; $j -lt (Get-Random -Minimum 20 -Maximum 80); $j++) {
-        $line += $chars | Get-Random
+        $line += ($chars | Get-Random)
     }
 
     # Pick random color

@@ -41,7 +41,10 @@ $extraScripts = @(
     "$PSScriptRoot\modules\web\scripts\node-js.ps1",
     "$PSScriptRoot\modules\web\scripts\nextCLI.ps1",
     "$PSScriptRoot\modules\web\scripts\make-express-boilerplate.ps1",
-    "$PSScriptRoot\modules\web\scripts\JWT-boilerplate.ps1"
+    "$PSScriptRoot\modules\web\scripts\JWT-boilerplate.ps1",
+    "$PSScriptRoot\modules\simulation\shark\shark-session.ps1",
+    "$PSScriptRoot\modules\simulation\shark\randomnymous2.ps1"
+    # "$PSScriptRoot\modules\simulation\chaos\chaos-text.ps1"
 )
 
 foreach ($script in $extraScripts) {
