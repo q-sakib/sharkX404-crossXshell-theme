@@ -1,4 +1,4 @@
-cls
+Clear-Host
 
 # Shark ASCII Art array
 
