@@ -131,15 +131,40 @@ switch ($selection) {
     }
 }
 
+# --- PowerShell Modules --- 
+# Terminal-Icons removed due to unstability with pwsh and transform with Eza file icons
+
+# $psModules = @("PSReadLine", "Terminal-Icons", "posh-git", "z")
+# foreach ($mod in $psModules) {
+#     if (-not (Get-Module -ListAvailable -Name $mod)) {
+#         Install-Module $mod -Force -Scope CurrentUser
+#     } else {
+#         Write-Host "✅ PowerShell module '$mod' already installed." -ForegroundColor Gray
+#     }
+# }
+
+
 # --- PowerShell Modules ---
-$psModules = @("PSReadLine", "Terminal-Icons", "posh-git", "z")
+$psModules = @("PSReadLine", "posh-git", "z") # Removed Terminal-Icons
 foreach ($mod in $psModules) {
     if (-not (Get-Module -ListAvailable -Name $mod)) {
         Install-Module $mod -Force -Scope CurrentUser
-    } else {
+    }
+    else {
         Write-Host "✅ PowerShell module '$mod' already installed." -ForegroundColor Gray
     }
 }
+
+# --- Eza (File Icons) ---
+if (-not (Test-Command eza)) {
+    Write-Host "➡ Installing Eza for enhanced ls with icons..." -ForegroundColor Yellow
+    winget install eza-community.eza --accept-package-agreements --accept-source-agreements -e
+}
+else {
+    Write-Host "✅ Eza already installed." -ForegroundColor Gray
+}
+
+
 
 # --- Oh My Posh ---
 if (-not (Test-Command oh-my-posh)) {

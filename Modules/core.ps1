@@ -38,7 +38,43 @@ Set-PSReadLineOption -Colors @{
 # 🧩 Icons and Git Prompt
 # Install-Module Terminal-Icons -Scope CurrentUser -Force
 # Import-Module Terminal-Icons -Force -Verbose
-Import-Module Terminal-Icons
+# ── File Icons & Enhanced 'ls' using Eza ──
+if (Get-Command eza -ErrorAction SilentlyContinue) {
+
+    # Remove built-in alias to allow function override
+    if (Get-Alias ls -ErrorAction SilentlyContinue) { Remove-Item Alias:ls }
+
+    # Define ls function wrapping Eza
+    Function ls {
+        param(
+            [Parameter(ValueFromRemainingArguments = $true)]
+            $args
+        )
+        eza --icons --git --color=auto @args
+    }
+
+    # Define ll for long listing
+    Function ll {
+        param(
+            [Parameter(ValueFromRemainingArguments = $true)]
+            $args
+        )
+        eza --icons --git --color=auto -l @args
+    }
+
+    # Define la for listing all (including hidden)
+    Function la {
+        param(
+            [Parameter(ValueFromRemainingArguments = $true)]
+            $args
+        )
+        eza --icons --git --color=auto -a @args
+    }
+
+}
+else {
+    Write-Host "⚠️ Eza not found. Install via: winget install eza-community.eza" -ForegroundColor Yellow
+}
 
 Import-Module posh-git
 
