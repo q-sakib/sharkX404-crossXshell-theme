@@ -57,6 +57,61 @@ function ngserve {
     ng serve
 }
 
+function ngs-mem {
+    param(
+        [int]$Memory = 8192
+    )
+
+    node --max_old_space_size=$Memory ./node_modules/@angular/cli/bin/ng serve
+}
+
+function ngmserve {
+    param(
+        [switch]$e,                       # Efficient mode: always 4GB
+        [switch]$ep,                      # Efficient Power: half of system RAM
+        [Alias("p")] [int]$Port,          # Port shortcut
+        [Alias("h")] [string]$HostName,  # Host shortcut (renamed to avoid conflict)
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$NgArgs                 # Extra ng serve args
+    )
+
+    # -----------------------------
+    # Step 1: Determine memory
+    # -----------------------------
+    if ($e) {
+        $Memory = 4096
+    }
+    elseif ($ep) {
+        $totalMB = [math]::Floor((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1MB)
+        $Memory = [math]::Floor($totalMB / 2)
+        if ($Memory -lt 4096) { $Memory = 4096 }
+    }
+    else {
+        $Memory = 8192
+    }
+
+    # -----------------------------
+    # Step 2: Build ng serve command
+    # -----------------------------
+    $cmd = @(
+        "node",
+        "--max_old_space_size=$Memory",
+        "./node_modules/@angular/cli/bin/ng",
+        "serve"
+    )
+
+    if ($Port) { $cmd += "--port $Port" }
+    if ($HostName) { $cmd += "--host $HostName" }
+    if ($NgArgs) { $cmd += $NgArgs }
+
+    # -----------------------------
+    # Step 3: Execute
+    # -----------------------------
+    Write-Host "Running: $($cmd -join ' ')" -ForegroundColor Cyan
+    & $cmd
+}
+
+
 # 🏗 Angular build
 function ngbuild {
     ng build
