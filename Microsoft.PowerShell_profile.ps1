@@ -13,8 +13,16 @@ Get-ChildItem "$modulesPath\*.ps1" -ErrorAction SilentlyContinue | ForEach-Objec
 
 # 2. Explicitly load additional deep/nested scripts
 $extraScripts = @(
+    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist.ps1",
+    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-Angular.ps1",
+    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-Database.ps1",
+    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-Git.ps1",
+    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-Laravel.ps1",
+    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-Node.ps1",
+    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-PowerShell.ps1",
+
+
     "$PSScriptRoot\modules\web\webdev.ps1",
-    "$PSScriptRoot\modules\web\DevChecklist.ps1",
     "$PSScriptRoot\modules\web\scripts\db\env\environment.ps1",
 
     "$PSScriptRoot\modules\web\scripts\db\ORM\mongoose\MongoDBConnectionHelper.ps1",

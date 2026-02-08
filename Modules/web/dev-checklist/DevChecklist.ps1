@@ -72,7 +72,15 @@ Set-Location path      # Change directory
 code .                 # Open current folder in VS Code
 "@
 
-    Write-Host "`n=============================================" -ForegroundColor Cyan
-    Write-Host "              END OF CHEAT SHEET" -ForegroundColor Green
-    Write-Host "=============================================" -ForegroundColor Cyan
+    Write-Host "`nDevChecklist-Angular DevChecklist-Angular -Full" -ForegroundColor Cyan
+    Write-Host "`nDevChecklist-Database DevChecklist-Database -Full" -ForegroundColor Cyan
+    Write-Host "`nDevChecklist-Git DevChecklist-Git -Full" -ForegroundColor Cyan
+    Write-Host "`nDevChecklist-Laravel DevChecklist-Laravel -Full" -ForegroundColor Cyan
+    Write-Host "`nDevChecklist-Node DevChecklist-Node -Full" -ForegroundColor Cyan
+    Write-Host "`nDevChecklist-PowerShell DevChecklist-PowerShell -Full" -ForegroundColor Cyan
+    Write-Host "`n===============================================" -ForegroundColor Cyan
+    Write-Host "`n===============================================" -ForegroundColor Cyan
+    Write-Host "`n===============================================" -ForegroundColor Cyan
+    Write-Host "              END OF CHEAT SHEET"                  -ForegroundColor Green
+    Write-Host "=================================================" -ForegroundColor Cyan
 }
