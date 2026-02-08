@@ -1,9 +1,13 @@
 #!/bin/bash
 set -e
 
-BB_USER="YOUR_BITBUCKET_USERNAME"
-NAME="Sakib SiddiQuie"
-EMAIL="i.sak1uib@gmail.com"
+# Load .env
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+else
+  echo ".env not found!"
+  exit 1
+fi
 
 echo "🔧 Configuring Git (macOS/Linux)"
 
@@ -23,4 +27,7 @@ git config --global url."https://bitbucket.org/".insteadOf git@bitbucket.org:
 
 echo "✅ Git configured"
 echo "➡️ Run ssh-setup.sh to enable SSH fallback"
-echo "➡️ Clone/pull once to store token"
+
+# Optional: first clone using token (saves token in Keychain)
+# Uncomment and edit workspace/repo
+# git clone https://$BB_USER:$BB_TOKEN@bitbucket.org/<workspace>/<repo>.git

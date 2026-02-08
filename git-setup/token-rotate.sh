@@ -1,10 +1,16 @@
 #!/bin/bash
 set -e
 
-read -p "Bitbucket username: " BB_USER
+# Load .env
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+else
+  echo ".env not found!"
+  exit 1
+fi
+
 read -s -p "Bitbucket account password (one-time): " BB_PASS
 echo ""
-
 read -s -p "New app password label: " LABEL
 echo ""
 
@@ -14,15 +20,13 @@ RESP=$(curl -s -u "$BB_USER:$BB_PASS" \
   -d "{
     \"label\": \"$LABEL\",
     \"permissions\": {
-      \"repositories\": {
-        \"read\": true,
-        \"write\": true
-      }
+      \"repositories\": {\"read\": true,\"write\": true}
     }
   }")
 
 TOKEN=$(echo "$RESP" | jq -r '.password')
 
+# Save in Keychain (macOS)
 security add-internet-password \
   -a "$BB_USER" \
   -s bitbucket.org \
@@ -31,3 +35,6 @@ security add-internet-password \
   -U
 
 echo "✅ Token rotated and saved to Keychain"
+
+# Optional: update .env
+sed -i '' "s|^BB_TOKEN=.*|BB_TOKEN=$TOKEN|" .env
