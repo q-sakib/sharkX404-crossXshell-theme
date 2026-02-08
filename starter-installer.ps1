@@ -1,7 +1,9 @@
 # -----------------------------------------
-# 🚀 FULLSTACK DEV STARTER INSTALLER
+# 🚀 FULLSTACK DEV STARTER INSTALLER (X-PLATFORM)
+# Windows | macOS | Linux
 # -----------------------------------------
 
+# ---------- Helpers ----------
 function Test-Command {
     param ($cmd)
     return (Get-Command $cmd -ErrorAction SilentlyContinue)
@@ -12,43 +14,72 @@ function Install-NpmIfMissing {
     if (-not (npm list -g --depth=0 | Select-String $pkg)) {
         Write-Host "➡ Installing npm package: $pkg" -ForegroundColor Yellow
         npm install -g $pkg
-    } else {
+    }
+    else {
         Write-Host "✅ npm package '$pkg' already installed." -ForegroundColor Gray
     }
 }
 
-Write-Host "`n📦 Installing essential tools..." -ForegroundColor Cyan
+# ---------- OS Detection ----------
+Write-Host "`n🖥️ Detecting OS..." -ForegroundColor Cyan
 
-# --- GitHub CLI ---
+if ($IsWindows) {
+    $OS = "Windows"
+}
+elseif ($IsMacOS) {
+    $OS = "macOS"
+}
+elseif ($IsLinux) {
+    $OS = "Linux"
+}
+else {
+    Write-Error "Unsupported OS"
+    exit 1
+}
+
+Write-Host "✅ Detected: $OS" -ForegroundColor Green
+
+# ---------- Package Manager ----------
+if ($OS -eq "Windows") {
+    if (-not (Test-Command winget)) {
+        Write-Error "winget is required on Windows."
+        exit 1
+    }
+}
+elseif ($OS -eq "macOS") {
+    if (-not (Test-Command brew)) {
+        Write-Error "Homebrew not found. Install from https://brew.sh"
+        exit 1
+    }
+}
+elseif ($OS -eq "Linux") {
+    if (-not (Test-Command apt) -and -not (Test-Command dnf) -and -not (Test-Command pacman)) {
+        Write-Error "No supported Linux package manager found (apt/dnf/pacman)."
+        exit 1
+    }
+}
+
+# ---------- GitHub CLI ----------
 if (-not (Test-Command gh)) {
-    winget install --id GitHub.cli --accept-package-agreements --accept-source-agreements -e
-} else {
-    winget upgrade --id GitHub.cli --accept-package-agreements --accept-source-agreements -e
+    Write-Host "➡ Installing GitHub CLI..." -ForegroundColor Yellow
+    if ($OS -eq "Windows") { winget install GitHub.cli -e }
+    elseif ($OS -eq "macOS") { brew install gh }
+    else { sudo apt install gh -y }
 }
 
-# --- Hugging Face CLI ---
-if (-not (Test-Command huggingface-cli)) {
-    pip install huggingface_hub
-} else {
-    pip install --upgrade huggingface_hub
-}
+# ---------- Hugging Face CLI ----------
+Write-Host "➡ Installing Hugging Face CLI..." -ForegroundColor Yellow
+pip3 install --upgrade huggingface_hub
 
-# --- NVM for Windows ---
-if (-not (Test-Command nvm)) {
-    Write-Host "➡ Installing NVM for Node.js version control..." -ForegroundColor Yellow
-    winget install CoreyButler.NVMforWindows --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ NVM already installed." -ForegroundColor Gray
-}
-
-# --- Node.js via winget ---
+# ---------- Node.js ----------
 if (-not (Test-Command node)) {
-    winget install OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ Node.js already installed." -ForegroundColor Gray
+    Write-Host "➡ Installing Node.js..." -ForegroundColor Yellow
+    if ($OS -eq "Windows") { winget install OpenJS.NodeJS.LTS -e }
+    elseif ($OS -eq "macOS") { brew install node }
+    else { sudo apt install nodejs npm -y }
 }
 
-# --- Install npm global CLI tools ---
+# ---------- npm global tools ----------
 $npmCLIs = @(
     "live-server",
     "nodemon",
@@ -65,125 +96,103 @@ foreach ($cli in $npmCLIs) {
     Install-NpmIfMissing $cli
 }
 
-# --- PHP, Composer, Laravel ---
+# ---------- PHP / Composer / Laravel ----------
 if (-not (Test-Command php)) {
-    winget install PHP.PHP --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ PHP already installed." -ForegroundColor Gray
+    Write-Host "➡ Installing PHP..." -ForegroundColor Yellow
+    if ($OS -eq "Windows") { winget install PHP.PHP -e }
+    elseif ($OS -eq "macOS") { brew install php }
+    else { sudo apt install php-cli -y }
 }
 
 if (-not (Test-Command composer)) {
-    winget install Composer.Composer --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ Composer already installed." -ForegroundColor Gray
+    Write-Host "➡ Installing Composer..." -ForegroundColor Yellow
+    if ($OS -eq "Windows") { winget install Composer.Composer -e }
+    elseif ($OS -eq "macOS") { brew install composer }
+    else { sudo apt install composer -y }
 }
 
 if (-not (Test-Command laravel)) {
     composer global require laravel/installer
-    $env:Path += ";$env:APPDATA\Composer\vendor\bin"
-    Write-Host "✅ Laravel installer added to path." -ForegroundColor Gray
-} else {
-    Write-Host "✅ Laravel already installed." -ForegroundColor Gray
+    if ($OS -eq "Windows") {
+        $env:PATH += ";$env:APPDATA\Composer\vendor\bin"
+    }
+    else {
+        $env:PATH += ":$HOME/.composer/vendor/bin"
+    }
 }
 
-# --- Docker ---
+# ---------- Docker ----------
 if (-not (Test-Command docker)) {
-    winget install Docker.DockerDesktop --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ Docker already installed." -ForegroundColor Gray
+    Write-Host "➡ Installing Docker..." -ForegroundColor Yellow
+    if ($OS -eq "Windows") { winget install Docker.DockerDesktop -e }
+    elseif ($OS -eq "macOS") { brew install --cask docker }
+    else { sudo apt install docker.io -y }
 }
 
-# --- PostgreSQL / MySQL / MongoDB Selection ---
-Write-Host "`n🗄️ Choose a database to install (enter number):" -ForegroundColor Cyan
+# ---------- Database Selection ----------
+Write-Host "`n🗄️ Choose a database to install:" -ForegroundColor Cyan
 Write-Host "1. PostgreSQL"
 Write-Host "2. MySQL"
 Write-Host "3. MongoDB"
 Write-Host "4. None"
+
 $selection = Read-Host "Select [1/2/3/4]"
 
 switch ($selection) {
     '1' {
-        if (-not (Test-Command psql)) {
-            winget install PostgreSQL.PostgreSQL --accept-package-agreements --accept-source-agreements -e
-        } else {
-            Write-Host "✅ PostgreSQL already installed." -ForegroundColor Gray
-        }
+        if ($OS -eq "Windows") { winget install PostgreSQL.PostgreSQL -e }
+        elseif ($OS -eq "macOS") { brew install postgresql }
+        else { sudo apt install postgresql -y }
     }
     '2' {
-        if (-not (Test-Command mysql)) {
-            winget install Oracle.MySQL --accept-package-agreements --accept-source-agreements -e
-        } else {
-            Write-Host "✅ MySQL already installed." -ForegroundColor Gray
-        }
+        if ($OS -eq "Windows") { winget install Oracle.MySQL -e }
+        elseif ($OS -eq "macOS") { brew install mysql }
+        else { sudo apt install mysql-server -y }
     }
     '3' {
-        if (-not (Test-Command mongod)) {
-            winget install MongoDB.MongoDBCommunity --accept-package-agreements --accept-source-agreements -e
-        } else {
-            Write-Host "✅ MongoDB already installed." -ForegroundColor Gray
-        }
+        if ($OS -eq "Windows") { winget install MongoDB.MongoDBCommunity -e }
+        elseif ($OS -eq "macOS") { brew tap mongodb/brew; brew install mongodb-community }
+        else { sudo apt install mongodb -y }
     }
-    '4' {
-        Write-Host "🚫 Skipping database install." -ForegroundColor Yellow
-    }
-    Default {
-        Write-Host "⚠️ Invalid selection. No database installed." -ForegroundColor Red
-    }
+    Default { Write-Host "🚫 Skipping database install." -ForegroundColor Yellow }
 }
 
-# --- PowerShell Modules --- 
-# Terminal-Icons removed due to unstability with pwsh and transform with Eza file icons
-
-# $psModules = @("PSReadLine", "Terminal-Icons", "posh-git", "z")
-# foreach ($mod in $psModules) {
-#     if (-not (Get-Module -ListAvailable -Name $mod)) {
-#         Install-Module $mod -Force -Scope CurrentUser
-#     } else {
-#         Write-Host "✅ PowerShell module '$mod' already installed." -ForegroundColor Gray
-#     }
-# }
-
-
-# --- PowerShell Modules ---
-$psModules = @("PSReadLine", "posh-git", "z") # Removed Terminal-Icons
+# ---------- PowerShell Modules ----------
+$psModules = @("PSReadLine", "posh-git", "z")
 foreach ($mod in $psModules) {
     if (-not (Get-Module -ListAvailable -Name $mod)) {
-        Install-Module $mod -Force -Scope CurrentUser
-    }
-    else {
-        Write-Host "✅ PowerShell module '$mod' already installed." -ForegroundColor Gray
+        Install-Module $mod -Scope CurrentUser -Force
     }
 }
 
-# --- Eza (File Icons) ---
+# ---------- Eza ----------
 if (-not (Test-Command eza)) {
-    Write-Host "➡ Installing Eza for enhanced ls with icons..." -ForegroundColor Yellow
-    winget install eza-community.eza --accept-package-agreements --accept-source-agreements -e
+    Write-Host "➡ Installing eza..." -ForegroundColor Yellow
+    if ($OS -eq "Windows") { winget install eza-community.eza -e }
+    elseif ($OS -eq "macOS") { brew install eza }
+    else { sudo apt install eza -y }
 }
-else {
-    Write-Host "✅ Eza already installed." -ForegroundColor Gray
-}
 
-
-
-# --- Oh My Posh ---
+# ---------- Oh My Posh ----------
 if (-not (Test-Command oh-my-posh)) {
-    winget install JanDeDobbeleer.OhMyPosh --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ Oh My Posh already installed." -ForegroundColor Gray
+    Write-Host "➡ Installing Oh My Posh..." -ForegroundColor Yellow
+    if ($OS -eq "Windows") { winget install JanDeDobbeleer.OhMyPosh -e }
+    elseif ($OS -eq "macOS") { brew install jandedobbeleer/oh-my-posh/oh-my-posh }
+    else {
+        curl -s https://ohmyposh.dev/install.sh | bash
+    }
 }
 
-# --- Extras ---
-if (-not (Test-Command tldr)) {
-    winget install tldr-pages.tldr --accept-package-agreements --accept-source-agreements -e
-}
-if (-not (Test-Command http)) {
-    winget install httpie --accept-package-agreements --accept-source-agreements -e
-}
-if (-not (Test-Command fzf)) {
-    winget install fzf --accept-package-agreements --accept-source-agreements -e
+# ---------- Extras ----------
+$extras = @("tldr", "httpie", "fzf")
+foreach ($tool in $extras) {
+    if (-not (Test-Command $tool)) {
+        if ($OS -eq "Windows") { winget install $tool -e }
+        elseif ($OS -eq "macOS") { brew install $tool }
+        else { sudo apt install $tool -y }
+    }
 }
 
-# ✅ Done
-Write-Host "`n✅ All tools installed and up to date!" -ForegroundColor Green
-Write-Host "🧩 You can now run your full PowerShell setup script." -ForegroundColor Cyan
+# ---------- Done ----------
+Write-Host "`n✅ Fullstack environment ready on $OS!" -ForegroundColor Green
+Write-Host "🎨 Load Oh My Posh + Nerd Font in your terminal for icons." -ForegroundColor Cyan
