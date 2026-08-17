@@ -1,0 +1,24 @@
+# =====================================================================
+# ⚡ Modular Zsh Profile Master Entrypoint (macOS Native Shell)
+# Auto-loads all modules in native-shell/modules/*.zsh dynamically
+# =====================================================================
+
+NATIVE_SHELL_DIR="${0:A:h}"
+if [[ ! -d "$NATIVE_SHELL_DIR/modules" ]]; then
+    NATIVE_SHELL_DIR="$HOME/--devX404/admin-shell/sharkX404-crossXshell-theme/native-shell"
+fi
+
+if [[ -d "$NATIVE_SHELL_DIR/modules" ]]; then
+    for module in "$NATIVE_SHELL_DIR/modules"/*.zsh; do
+        if [[ -f "$module" ]]; then
+            source "$module"
+        fi
+    done
+fi
+
+# Oh My Posh Prompt Initialization
+if command -v oh-my-posh >/dev/null 2>&1; then
+    eval "$(oh-my-posh init zsh)"
+fi
+
+echo "✅ Fullstack Zsh Environment Loaded (Native macOS). Type 'ghelp' for Git shortcuts or 'sysinfo' for chip diagnostics!"
