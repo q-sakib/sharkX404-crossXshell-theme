@@ -1,54 +1,88 @@
-# -----------------------------------------
-# 🚀 FULLSTACK DEV STARTER INSTALLER
-# -----------------------------------------
+# ---------------------------------------------------------------------
+# 🚀 FULLSTACK DEV STARTER INSTALLER (Cross-Platform: macOS & Windows)
+# ---------------------------------------------------------------------
 
 function Test-Command {
     param ($cmd)
-    return (Get-Command $cmd -ErrorAction SilentlyContinue)
+    return [bool](Get-Command $cmd -ErrorAction SilentlyContinue)
 }
 
 function Install-NpmIfMissing {
     param($pkg)
-    if (-not (npm list -g --depth=0 | Select-String $pkg)) {
-        Write-Host "➡ Installing npm package: $pkg" -ForegroundColor Yellow
-        npm install -g $pkg
-    } else {
-        Write-Host "✅ npm package '$pkg' already installed." -ForegroundColor Gray
+    if (Test-Command npm) {
+        if (-not (npm list -g --depth=0 2>$null | Select-String $pkg)) {
+            Write-Host "➡ Installing npm package: $pkg" -ForegroundColor Yellow
+            npm install -g $pkg
+        } else {
+            Write-Host "✅ npm package '$pkg' already installed." -ForegroundColor Gray
+        }
     }
 }
 
-Write-Host "`n📦 Installing essential tools..." -ForegroundColor Cyan
+$isMac = $IsMacOS -or $IsLinux -or ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::OSX))
 
-# --- GitHub CLI ---
-if (-not (Test-Command gh)) {
-    winget install --id GitHub.cli --accept-package-agreements --accept-source-agreements -e
+Write-Host "`n📦 Bootstrapping fullstack development tools ($($if ($isMac) { 'macOS' } else { 'Windows' }))..." -ForegroundColor Cyan
+
+if ($isMac) {
+    # 🍎 macOS Homebrew Installation Pathway
+    if (-not (Test-Command brew)) {
+        Write-Host "➡ Installing Homebrew..." -ForegroundColor Yellow
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    }
+
+    $brewPackages = @(
+        @{ Cmd = "gh";          Pkg = "gh" },
+        @{ Cmd = "eza";         Pkg = "eza" },
+        @{ Cmd = "oh-my-posh";  Pkg = "jandedobbeleer/oh-my-posh/oh-my-posh" },
+        @{ Cmd = "fzf";         Pkg = "fzf" },
+        @{ Cmd = "tldr";        Pkg = "tldr" },
+        @{ Cmd = "http";        Pkg = "httpie" },
+        @{ Cmd = "node";        Pkg = "node" },
+        @{ Cmd = "nvm";         Pkg = "nvm" },
+        @{ Cmd = "php";         Pkg = "php" },
+        @{ Cmd = "composer";    Pkg = "composer" }
+    )
+
+    foreach ($item in $brewPackages) {
+        if (-not (Test-Command $item.Cmd)) {
+            Write-Host "➡ Installing $($item.Pkg) via brew..." -ForegroundColor Yellow
+            brew install $item.Pkg
+        } else {
+            Write-Host "✅ Command '$($item.Cmd)' already installed." -ForegroundColor Gray
+        }
+    }
 } else {
-    winget upgrade --id GitHub.cli --accept-package-agreements --accept-source-agreements -e
+    # 🪟 Windows Winget Installation Pathway
+    $wingetPackages = @(
+        @{ Cmd = "gh";          Id = "GitHub.cli" },
+        @{ Cmd = "node";        Id = "OpenJS.NodeJS.LTS" },
+        @{ Cmd = "php";         Id = "PHP.PHP" },
+        @{ Cmd = "composer";    Id = "Composer.Composer" },
+        @{ Cmd = "docker";      Id = "Docker.DockerDesktop" },
+        @{ Cmd = "eza";         Id = "eza-community.eza" },
+        @{ Cmd = "oh-my-posh";  Id = "JanDeDobbeleer.OhMyPosh" },
+        @{ Cmd = "tldr";        Id = "tldr-pages.tldr" },
+        @{ Cmd = "http";        Id = "httpie" },
+        @{ Cmd = "fzf";         Id = "fzf" }
+    )
+
+    foreach ($item in $wingetPackages) {
+        if (-not (Test-Command $item.Cmd)) {
+            Write-Host "➡ Installing $($item.Id) via winget..." -ForegroundColor Yellow
+            winget install --id $item.Id --accept-package-agreements --accept-source-agreements -e
+        } else {
+            Write-Host "✅ Command '$($item.Cmd)' already installed." -ForegroundColor Gray
+        }
+    }
 }
 
 # --- Hugging Face CLI ---
 if (-not (Test-Command huggingface-cli)) {
-    pip install huggingface_hub
-} else {
-    pip install --upgrade huggingface_hub
+    if (Test-Command pip3) { pip3 install huggingface_hub }
+    elseif (Test-Command pip) { pip install huggingface_hub }
 }
 
-# --- NVM for Windows ---
-if (-not (Test-Command nvm)) {
-    Write-Host "➡ Installing NVM for Node.js version control..." -ForegroundColor Yellow
-    winget install CoreyButler.NVMforWindows --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ NVM already installed." -ForegroundColor Gray
-}
-
-# --- Node.js via winget ---
-if (-not (Test-Command node)) {
-    winget install OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ Node.js already installed." -ForegroundColor Gray
-}
-
-# --- Install npm global CLI tools ---
+# --- Global NPM CLI Tools ---
 $npmCLIs = @(
     "live-server",
     "nodemon",
@@ -65,125 +99,21 @@ foreach ($cli in $npmCLIs) {
     Install-NpmIfMissing $cli
 }
 
-# --- PHP, Composer, Laravel ---
-if (-not (Test-Command php)) {
-    winget install PHP.PHP --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ PHP already installed." -ForegroundColor Gray
-}
-
-if (-not (Test-Command composer)) {
-    winget install Composer.Composer --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ Composer already installed." -ForegroundColor Gray
-}
-
-if (-not (Test-Command laravel)) {
+# --- Laravel Installer ---
+if (Test-Command composer -and -not (Test-Command laravel)) {
     composer global require laravel/installer
-    $env:Path += ";$env:APPDATA\Composer\vendor\bin"
-    Write-Host "✅ Laravel installer added to path." -ForegroundColor Gray
-} else {
-    Write-Host "✅ Laravel already installed." -ForegroundColor Gray
 }
-
-# --- Docker ---
-if (-not (Test-Command docker)) {
-    winget install Docker.DockerDesktop --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ Docker already installed." -ForegroundColor Gray
-}
-
-# --- PostgreSQL / MySQL / MongoDB Selection ---
-Write-Host "`n🗄️ Choose a database to install (enter number):" -ForegroundColor Cyan
-Write-Host "1. PostgreSQL"
-Write-Host "2. MySQL"
-Write-Host "3. MongoDB"
-Write-Host "4. None"
-$selection = Read-Host "Select [1/2/3/4]"
-
-switch ($selection) {
-    '1' {
-        if (-not (Test-Command psql)) {
-            winget install PostgreSQL.PostgreSQL --accept-package-agreements --accept-source-agreements -e
-        } else {
-            Write-Host "✅ PostgreSQL already installed." -ForegroundColor Gray
-        }
-    }
-    '2' {
-        if (-not (Test-Command mysql)) {
-            winget install Oracle.MySQL --accept-package-agreements --accept-source-agreements -e
-        } else {
-            Write-Host "✅ MySQL already installed." -ForegroundColor Gray
-        }
-    }
-    '3' {
-        if (-not (Test-Command mongod)) {
-            winget install MongoDB.MongoDBCommunity --accept-package-agreements --accept-source-agreements -e
-        } else {
-            Write-Host "✅ MongoDB already installed." -ForegroundColor Gray
-        }
-    }
-    '4' {
-        Write-Host "🚫 Skipping database install." -ForegroundColor Yellow
-    }
-    Default {
-        Write-Host "⚠️ Invalid selection. No database installed." -ForegroundColor Red
-    }
-}
-
-# --- PowerShell Modules --- 
-# Terminal-Icons removed due to unstability with pwsh and transform with Eza file icons
-
-# $psModules = @("PSReadLine", "Terminal-Icons", "posh-git", "z")
-# foreach ($mod in $psModules) {
-#     if (-not (Get-Module -ListAvailable -Name $mod)) {
-#         Install-Module $mod -Force -Scope CurrentUser
-#     } else {
-#         Write-Host "✅ PowerShell module '$mod' already installed." -ForegroundColor Gray
-#     }
-# }
-
 
 # --- PowerShell Modules ---
-$psModules = @("PSReadLine", "posh-git", "z") # Removed Terminal-Icons
+$psModules = @("PSReadLine", "posh-git", "z")
 foreach ($mod in $psModules) {
     if (-not (Get-Module -ListAvailable -Name $mod)) {
-        Install-Module $mod -Force -Scope CurrentUser
-    }
-    else {
+        Write-Host "➡ Installing PowerShell module '$mod'..." -ForegroundColor Yellow
+        Install-Module $mod -Force -Scope CurrentUser -ErrorAction SilentlyContinue
+    } else {
         Write-Host "✅ PowerShell module '$mod' already installed." -ForegroundColor Gray
     }
 }
 
-# --- Eza (File Icons) ---
-if (-not (Test-Command eza)) {
-    Write-Host "➡ Installing Eza for enhanced ls with icons..." -ForegroundColor Yellow
-    winget install eza-community.eza --accept-package-agreements --accept-source-agreements -e
-}
-else {
-    Write-Host "✅ Eza already installed." -ForegroundColor Gray
-}
-
-
-
-# --- Oh My Posh ---
-if (-not (Test-Command oh-my-posh)) {
-    winget install JanDeDobbeleer.OhMyPosh --accept-package-agreements --accept-source-agreements -e
-} else {
-    Write-Host "✅ Oh My Posh already installed." -ForegroundColor Gray
-}
-
-# --- Extras ---
-if (-not (Test-Command tldr)) {
-    winget install tldr-pages.tldr --accept-package-agreements --accept-source-agreements -e
-}
-if (-not (Test-Command http)) {
-    winget install httpie --accept-package-agreements --accept-source-agreements -e
-}
-if (-not (Test-Command fzf)) {
-    winget install fzf --accept-package-agreements --accept-source-agreements -e
-}
-
-# ✅ Done
-Write-Host "`n✅ All tools installed and up to date!" -ForegroundColor Green
-Write-Host "🧩 You can now run your full PowerShell setup script." -ForegroundColor Cyan
+Write-Host "`n✅ Fullstack environment installation check complete!" -ForegroundColor Green
+Write-Host "🧩 Run './setup-profile.ps1' to automatically link your profile." -ForegroundColor Cyan
