@@ -45,17 +45,18 @@ if (-not (Test-Path (Join-Path $ProfileRepoDir "Modules"))) {
     }
 }
 
-# 1. Load Icons module first for font resilience
+# 1. Load Icons & Platform Architecture modules first
 $iconsScript = Join-Path $ProfileRepoDir "Modules/icons.ps1"
-if (Test-Path $iconsScript) {
-    try { . "$iconsScript" } catch {}
-}
+if (Test-Path $iconsScript) { try { . "$iconsScript" } catch {} }
+
+$platformScript = Join-Path $ProfileRepoDir "Modules/platform.ps1"
+if (Test-Path $platformScript) { try { . "$platformScript" } catch {} }
 
 # 2. Load all top-level helper scripts from 'Modules'
 $modulesPath = Join-Path $ProfileRepoDir "Modules"
 if (Test-Path $modulesPath) {
     Get-ChildItem -Path $modulesPath -Filter "*.ps1" -ErrorAction SilentlyContinue | ForEach-Object {
-        if ($_.Name -ne "icons.ps1") {
+        if ($_.Name -ne "icons.ps1" -and $_.Name -ne "platform.ps1") {
             try {
                 . "$($_.FullName)"
                 Write-Verbose "Loaded module script: $($_.Name)"
@@ -126,7 +127,7 @@ function basefuncs {
     Get-Command -CommandType Function |
     Where-Object { 
         $file = $_.ScriptBlock.File
-        ($file -and ($file -replace '\\','/') -like "*/Modules/*") -or $_.Name -match "^(up|codehere|jsonpretty|live|dev|api|deploy|gll|ghelp|git-aliases|grep|ff|dlog|load-env|edit-)" 
+        ($file -and ($file -replace '\\','/') -like "*/Modules/*") -or $_.Name -match "^(up|codehere|jsonpretty|live|dev|api|deploy|gll|ghelp|git-aliases|grep|ff|dlog|load-env|edit-|sysinfo|mac-arch)" 
     } |
     Sort-Object Name |
     Format-Table Name, @{Name="DefinedIn";Expression={$_.ScriptBlock.File}}, Description -AutoSize
@@ -157,9 +158,9 @@ function list-dev-functions {
     }
 
     Write-Host "`n🧭 Total: $($functions.Count) custom functions loaded" -ForegroundColor DarkGray
-    Write-Host "🔍 Tip: Use 'ghelp' for Git aliases or 'Get-Help <FunctionName>' for function details." -ForegroundColor DarkGray
+    Write-Host "🔍 Tip: Use 'ghelp' for Git aliases or 'sysinfo' for chip architecture diagnostics." -ForegroundColor DarkGray
 }
 
 Set-Alias clifuncs list-dev-functions -ErrorAction SilentlyContinue
 
-Write-Host "`n✅ Fullstack PowerShell Loaded (Cross-Platform). Press Ctrl+R for history search or type 'ghelp' for Git shortcuts!" -ForegroundColor Cyan
+Write-Host "`n✅ Fullstack PowerShell Loaded (Cross-Platform). Press Ctrl+R for history search, type 'ghelp' for Git shortcuts or 'sysinfo' for Mac hardware diagnostics!" -ForegroundColor Cyan
