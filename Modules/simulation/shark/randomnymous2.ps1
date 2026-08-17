@@ -1,5 +1,4 @@
 function Run-BannerAnimation {
-    Clear-Host
     # Define big ASCII banners
     $banners = @(
         @(
@@ -12,7 +11,7 @@ function Run-BannerAnimation {
         ), @(
             " ██████╗██╗  ██╗ █████╗ ██████╗ ██╗  ██╗",
             "██╔════╝██║  ██║██╔══██╗██╔══██╗██║ ██╔╝",
-            "╚█████╗ ███████║███████║██████╔╝█████╔╝ ",
+            "╚█████╗ ███████║███████║█████╔╝ ██║███████║",
             " ╚═══██╗██╔══██║██╔══██║██╔══██╗██╔═██╗ ",
             "██████╔╝██║  ██║██║  ██║██║  ██║██║  ██╗",
             "╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝"
@@ -33,24 +32,21 @@ function Run-BannerAnimation {
         )
     )
 
-    $termWidth = [console]::WindowWidth
+    $termWidth = try { [console]::WindowWidth } catch { 80 }
     $selectedBanner = Get-Random -InputObject $banners
     $bannerWidth = ($selectedBanner | Measure-Object -Maximum Length).Maximum
 
-    $maxPos = $termWidth - $bannerWidth
+    $maxPos = [math]::Max(0, $termWidth - $bannerWidth)
     $steps = 10
     $stepSize = [math]::Max(1, [math]::Floor($maxPos / $steps))
 
     for ($pos = 0; $pos -le $maxPos; $pos += $stepSize) {
-        Clear-Host
         foreach ($line in $selectedBanner) {
             $spaces = " " * $pos
             Write-Host "$spaces$line" -ForegroundColor Blue
         }
-        Start-Sleep -Milliseconds 40
+        Start-Sleep -Milliseconds 20
     }
-
-    Clear-Host
 
     Write-Host "💡 Terminal Ready! Try: Ready for your command...`n" -ForegroundColor Cyan
 
@@ -88,7 +84,7 @@ function Run-BannerAnimation {
         "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@→ clifuncs                 "
         "@@@→ clifuncs@@@@@@@@# Show list of all dev, test, utility & CLI functions                      "
     )
-    # Mapping from keywords to fixed colors
+
     $fixedColorsMap = @{
         "→ live"          = "Green"
         "→ deploy"        = "DarkCyan"
@@ -104,7 +100,6 @@ function Run-BannerAnimation {
     $randomColors = @("Cyan", "Magenta", "Yellow", "Green", "Blue")
 
     foreach ($line in $asciiArt) {
-        # Check if line contains any fixed keyword
         $foundColor = $null
         foreach ($keyword in $fixedColorsMap.Keys) {
             if ($line -like "*$keyword*") {
@@ -114,19 +109,17 @@ function Run-BannerAnimation {
         }
 
         if ($foundColor) {
-            # Use fixed color for this line
             Write-Host $line -ForegroundColor $foundColor
-        }
-        else {
-            # Use random color
+        } else {
             $color = Get-Random -InputObject $randomColors
             Write-Host $line -ForegroundColor $color
         }
-        Start-Sleep -Milliseconds 5
+        Start-Sleep -Milliseconds 2
     }
-
 }
-# Run animations with 200ms gap
-Run-SharkAnimation
-Start-Sleep -Milliseconds 200
-Run-BannerAnimation
+
+function start-shark-banner {
+    if (Get-Command Run-SharkAnimation -ErrorAction SilentlyContinue) { Run-SharkAnimation }
+    Start-Sleep -Milliseconds 100
+    Run-BannerAnimation
+}

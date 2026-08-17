@@ -1,5 +1,3 @@
-Clear-Host
-
 # Shark ASCII Art array
 
 function Run-SharkAnimation {
@@ -56,49 +54,33 @@ $asciiArt = @(
     "                                                                                                    "
 )
 
+    $termWidth = try { [console]::WindowWidth } catch { 80 }
+    $selectedShark = $asciiArt
 
-    $termWidth = [console]::WindowWidth
     $sharkWidth = 100
-
-    function Print-Shark {
-        param($padding)
-        Clear-Host
-        foreach ($line in $asciiArt) {
-            Write-Host (" " * $padding) -NoNewline
-            Write-Host $line -ForegroundColor Cyan
-        }
-    }
-
-    # Reduce number of positions, increase step to shorten duration
-    $maxPos = $termWidth - $sharkWidth
-    $steps = 10 # fewer steps
+    $maxPos = [math]::Max(0, $termWidth - $sharkWidth)
+    $steps = 8
     $stepSize = [math]::Max(1, [math]::Floor($maxPos / $steps))
 
     for ($pos = 0; $pos -le $maxPos; $pos += $stepSize) {
-        Print-Shark $pos
-        Start-Sleep -Milliseconds 50
+        foreach ($line in $selectedShark) {
+            $spaces = " " * $pos
+            Write-Host "$spaces$line" -ForegroundColor Cyan
+        }
+        Start-Sleep -Milliseconds 15
     }
-  Clear-Host
 
-$welcomeText = @(
-    " ██████╗██╗  ██╗ █████╗ ██████╗ ██╗  ██╗",
-    "██╔════╝██║  ██║██╔══██╗██╔══██╗██║ ██╔╝",
-    "╚█████╗ ███████║███████║██████╔╝█████╔╝ ",
-    " ╚═══██╗██╔══██║██╔══██║██╔══██╗██╔═██╗ ",
-    "██████╔╝██║  ██║██║  ██║██║  ██║██║  ██╗",
-    "╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝",
-    "",
-    "      Welcome to Shark Computer Terminal",
-    "          Stay sharp. Stay dangerous.",
-    "           Cyberpunk vibes activated."
-)
+    $welcomeText = @(
+        "      Welcome to Shark Computer Terminal",
+        "          Stay sharp. Stay dangerous.",
+        "           Cyberpunk vibes activated."
+    )
 
     $neonColors = @("Cyan", "Magenta", "Yellow", "Green")
 
     foreach ($line in $welcomeText) {
         $color = Get-Random -InputObject $neonColors
         Write-Host $line -ForegroundColor $color
-        Start-Sleep -Milliseconds 50  # faster than before
+        Start-Sleep -Milliseconds 10
     }
-
 }
