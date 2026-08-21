@@ -34,27 +34,7 @@ setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_SPACE
 setopt HIST_VERIFY
 
-# ── zsh-autocomplete — live dropdown list as you type (PSReadLine ListView) ──
-# MUST load before compinit — it manages compinit internally
-for _plugin in \
-    /opt/homebrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh \
-    "$HOME/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh"; do
-    [[ -f "$_plugin" ]] && { source "$_plugin"; break; }
-done
-unset _plugin
-
-# Show up to 10 history matches in the live list
-zstyle ':autocomplete:*' list-lines 10
-zstyle ':autocomplete:history-search:*' list-lines 10
-zstyle ':autocomplete:history-incremental-search-*:*' list-lines 10
-# Start showing after 1 character
-zstyle ':autocomplete:*' min-input 1
-# Delay before showing list (seconds); 0 = immediate
-zstyle ':autocomplete:*' delay 0.05
-# Recent dirs in list off — history entries only when typing
-zstyle ':autocomplete:*' recent-dirs off
-
-# ── Zsh completion (compinit handled by zsh-autocomplete above) ───────
+# ── Zsh completion (compinit and autocomplete dropdown handled in .zshrc) ─
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|=*' 'l:|=* r:|=*'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*:descriptions' format '%F{cyan}── %d ──%f'
