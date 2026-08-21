@@ -70,12 +70,23 @@ brew_install "node"        "node"
 brew_install "php"         "php"
 brew_install "composer"    "composer"
 brew_install "zoxide"      "zoxide"
+brew_install "jq"          "jq"
 
 # ── zsh plugins via Homebrew ──────────────────────────────────────────
-brew_install "" "zsh-autosuggestions"      2>/dev/null || brew install zsh-autosuggestions
-brew_install "" "zsh-syntax-highlighting"  2>/dev/null || brew install zsh-syntax-highlighting
+brew install zsh-autosuggestions    2>/dev/null || true
+brew install zsh-syntax-highlighting 2>/dev/null || true
 
-# Ensure fzf key bindings are installed
+# fzf-tab (replaces default Tab completion with fzf)
+FZF_TAB_DIR="$HOME/.zsh/fzf-tab"
+if [[ ! -d "$FZF_TAB_DIR" ]]; then
+    printf "${YELLOW}  ➡ Installing fzf-tab...${RESET}\n"
+    git clone --depth 1 https://github.com/Aloxaf/fzf-tab "$FZF_TAB_DIR"
+    printf "${GREEN}  ✅ fzf-tab installed to %s${RESET}\n" "$FZF_TAB_DIR"
+else
+    printf "${GRAY}  ✅ fzf-tab already installed.${RESET}\n"
+fi
+
+# fzf shell key bindings
 if has fzf && [[ ! -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ]]; then
     "$(brew --prefix fzf)/install" --key-bindings --completion --no-update-rc 2>/dev/null || true
 fi

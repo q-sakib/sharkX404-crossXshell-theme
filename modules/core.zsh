@@ -30,8 +30,29 @@ setopt HIST_VERIFY
 
 # ── Zsh completion ────────────────────────────────────────────────────
 autoload -Uz compinit && compinit
-zstyle ':completion:*' menu select
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' menu yes select interactive   # arrow-key menu + interactive filter
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*:descriptions' format '%F{cyan}── %d ──%f'
+zstyle ':completion:*:warnings' format '%F{yellow}  No matches for: %d%f'
+zstyle ':completion:*' group-name ''
+setopt MENU_COMPLETE     # Tab cycles through completions one by one
+
+# ── fzf-tab (replaces default completion menu with fzf list) ──────────
+# Install: brew install fzf-tab  OR  git clone to ~/.zsh/fzf-tab/
+for _fzf_tab in \
+    /opt/homebrew/share/fzf-tab/fzf-tab.plugin.zsh \
+    "$HOME/.zsh/fzf-tab/fzf-tab.plugin.zsh"; do
+    if [[ -f "$_fzf_tab" ]]; then
+        source "$_fzf_tab"
+        # Preview file content when completing paths
+        zstyle ':fzf-tab:complete:*' fzf-preview \
+            '[[ -d $realpath ]] && eza --icons -1 $realpath || bat --color=always --line-range=:40 $realpath 2>/dev/null || cat $realpath 2>/dev/null'
+        zstyle ':fzf-tab:*' fzf-flags --height=50% --border --reverse
+        break
+    fi
+done
+unset _fzf_tab
 
 # ── zsh-autosuggestions ───────────────────────────────────────────────
 for _plugin in \
@@ -41,7 +62,18 @@ for _plugin in \
     [[ -f "$_plugin" ]] && { source "$_plugin"; break; }
 done
 
+# Use both history and completion as suggestion sources
+export ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=50
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#606060'
+
+# Key bindings for autosuggestions
+bindkey '^ '   autosuggest-accept          # Ctrl+Space → accept full suggestion
+bindkey '^[f'  forward-word                # Alt+F      → accept one word
+bindkey '^['   autosuggest-clear           # Escape     → dismiss suggestion
+
 # ── zsh-syntax-highlighting ───────────────────────────────────────────
+# Must load AFTER all bindkey calls
 for _plugin in \
     /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
     /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
