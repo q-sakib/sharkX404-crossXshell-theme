@@ -34,41 +34,41 @@ setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_SPACE
 setopt HIST_VERIFY
 
-# ── Zsh completion ────────────────────────────────────────────────────
-autoload -Uz compinit && compinit
-zstyle ':completion:*' menu yes select interactive   # arrow-key menu + interactive filter
+# ── zsh-autocomplete — live dropdown list as you type (PSReadLine ListView) ──
+# MUST load before compinit — it manages compinit internally
+for _plugin in \
+    /opt/homebrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh \
+    "$HOME/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh"; do
+    [[ -f "$_plugin" ]] && { source "$_plugin"; break; }
+done
+unset _plugin
+
+# Show up to 10 history matches in the live list
+zstyle ':autocomplete:*' list-lines 10
+zstyle ':autocomplete:history-search:*' list-lines 10
+zstyle ':autocomplete:history-incremental-search-*:*' list-lines 10
+# Start showing after 1 character
+zstyle ':autocomplete:*' min-input 1
+# Delay before showing list (seconds); 0 = immediate
+zstyle ':autocomplete:*' delay 0.05
+# Recent dirs in list off — history entries only when typing
+zstyle ':autocomplete:*' recent-dirs off
+
+# ── Zsh completion (compinit handled by zsh-autocomplete above) ───────
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|=*' 'l:|=* r:|=*'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*:descriptions' format '%F{cyan}── %d ──%f'
 zstyle ':completion:*:warnings' format '%F{yellow}  No matches for: %d%f'
 zstyle ':completion:*' group-name ''
-setopt MENU_COMPLETE     # Tab cycles through completions one by one
 
-# ── fzf-tab (replaces default completion menu with fzf list) ──────────
-# Install: brew install fzf-tab  OR  git clone to ~/.zsh/fzf-tab/
-for _fzf_tab in \
-    /opt/homebrew/share/fzf-tab/fzf-tab.plugin.zsh \
-    "$HOME/.zsh/fzf-tab/fzf-tab.plugin.zsh"; do
-    if [[ -f "$_fzf_tab" ]]; then
-        source "$_fzf_tab"
-        # Preview file content when completing paths
-        zstyle ':fzf-tab:complete:*' fzf-preview \
-            '[[ -d $realpath ]] && eza --icons -1 $realpath || bat --color=always --line-range=:40 $realpath 2>/dev/null || cat $realpath 2>/dev/null'
-        zstyle ':fzf-tab:*' fzf-flags --height=50% --border --reverse
-        break
-    fi
-done
-unset _fzf_tab
-
-# ── zsh-autosuggestions ───────────────────────────────────────────────
+# ── zsh-autosuggestions — inline gray suggestion (PSReadLine InlineView) ─
 for _plugin in \
     /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
     /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
     "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"; do
     [[ -f "$_plugin" ]] && { source "$_plugin"; break; }
 done
-
-# Use both history and completion as suggestion sources
+unset _plugin
 export ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=50
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#606060'
@@ -76,23 +76,9 @@ export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#606060'
 # Key bindings for autosuggestions
 bindkey '^ '   autosuggest-accept          # Ctrl+Space → accept full suggestion
 bindkey '^[f'  forward-word                # Alt+F      → accept one word
-bindkey '^['   autosuggest-clear           # Escape     → dismiss suggestion
-
-# ── zsh-history-substring-search — PSReadLine-style Up/Down list ─────
-# Type partial command → Up/Down cycles only through matching history
-for _plugin in \
-    /opt/homebrew/share/zsh-history-substring-search/zsh-history-substring-search.zsh \
-    /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh \
-    "$HOME/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh"; do
-    [[ -f "$_plugin" ]] && { source "$_plugin"; break; }
-done
-unset _plugin
-HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=#1e3a5f,fg=white,bold'
-HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_NOT_FOUND='bg=#5f1e1e,fg=white,bold'
-HISTORY_SUBSTRING_SEARCH_GLOBBING_FLAGS='i'   # case-insensitive
 
 # ── zsh-syntax-highlighting ───────────────────────────────────────────
-# Must load AFTER all bindkey calls
+# Must load AFTER compinit and AFTER all other plugins
 for _plugin in \
     /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
     /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
@@ -128,12 +114,8 @@ autoload -Uz add-zsh-hook
 add-zsh-hook zshexit _save_last_location
 
 # ── Key bindings ──────────────────────────────────────────────────────
-# Up/Down — history-substring-search (PSReadLine ListView equivalent)
-bindkey '^[[A' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
-# Also wire emacs / vi-mode equivalents
-bindkey -M emacs '^P' history-substring-search-up
-bindkey -M emacs '^N' history-substring-search-down
+# Up/Down and Tab handled by zsh-autocomplete (shows live list)
+# Tab in the list → select entry   Right/End → accept inline suggestion
 bindkey "^[l"  clear-screen             # Alt+L = clear
 
 # ── Misc aliases ──────────────────────────────────────────────────────
