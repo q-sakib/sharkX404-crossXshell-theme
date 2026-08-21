@@ -26,31 +26,27 @@ autoload -Uz add-zsh-hook
 add-zsh-hook precmd _shark_flush_history
 _shark_flush_history() { fc -W 2>/dev/null; }
 
-# ── Smart Up arrow ────────────────────────────────────────────────────
-# Empty buffer → normal up-line-or-history
-# Non-empty buffer → fzf filtered list of matching entries
-_shark_history_up() {
-    if [[ -n "$BUFFER" ]] && command -v fzf &>/dev/null; then
-        local query="$BUFFER"
-        local selected
-        selected=$(fc -l 1 | grep -F "$query" | fzf --tac --no-sort \
-            --height=50% --reverse --border \
-            --query="$query" \
-            --prompt='↑ History > ' \
-            --header="Matching entries for: $query" \
-            --no-multi)
-        if [[ -n "$selected" ]]; then
-            BUFFER="${selected##*[0-9] }"   # strip leading line number
-            BUFFER="${BUFFER# }"            # strip leading space
-            CURSOR=${#BUFFER}
-            zle reset-prompt
-            return
-        fi
+# ── Ctrl+Up — fzf fuzzy history popup (broader search than Up/Down) ──
+# Up/Down is now handled by zsh-history-substring-search (core.zsh)
+# Ctrl+Up opens fzf with any matching entry from full history
+_shark_fzf_history_popup() {
+    local query="$BUFFER"
+    local selected
+    selected=$(fc -l 1 | grep -F "$query" | fzf --tac --no-sort \
+        --height=50% --reverse --border \
+        --query="$query" \
+        --prompt='↑ History > ' \
+        --header="Matching entries for: $query" \
+        --no-multi)
+    if [[ -n "$selected" ]]; then
+        BUFFER="${selected##*[0-9] }"
+        BUFFER="${BUFFER# }"
+        CURSOR=${#BUFFER}
+        zle reset-prompt
     fi
-    zle up-line-or-history
 }
-zle -N _shark_history_up
-bindkey '^[[A' _shark_history_up    # Up arrow
+zle -N _shark_fzf_history_popup
+bindkey '^[[1;5A' _shark_fzf_history_popup   # Ctrl+Up — fzf popup
 
 # ── hgrep — search history with fzf, puts result in readline buffer ──
 hgrep() {

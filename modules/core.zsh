@@ -78,6 +78,19 @@ bindkey '^ '   autosuggest-accept          # Ctrl+Space → accept full suggesti
 bindkey '^[f'  forward-word                # Alt+F      → accept one word
 bindkey '^['   autosuggest-clear           # Escape     → dismiss suggestion
 
+# ── zsh-history-substring-search — PSReadLine-style Up/Down list ─────
+# Type partial command → Up/Down cycles only through matching history
+for _plugin in \
+    /opt/homebrew/share/zsh-history-substring-search/zsh-history-substring-search.zsh \
+    /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh \
+    "$HOME/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh"; do
+    [[ -f "$_plugin" ]] && { source "$_plugin"; break; }
+done
+unset _plugin
+HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=#1e3a5f,fg=white,bold'
+HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_NOT_FOUND='bg=#5f1e1e,fg=white,bold'
+HISTORY_SUBSTRING_SEARCH_GLOBBING_FLAGS='i'   # case-insensitive
+
 # ── zsh-syntax-highlighting ───────────────────────────────────────────
 # Must load AFTER all bindkey calls
 for _plugin in \
@@ -114,9 +127,13 @@ _save_last_location() { echo "$PWD" > "$_last_dir_file"; }
 autoload -Uz add-zsh-hook
 add-zsh-hook zshexit _save_last_location
 
-# ── Useful key bindings ───────────────────────────────────────────────
-bindkey "^[[A" history-search-backward   # Up = history prefix search
-bindkey "^[[B" history-search-forward    # Down = history prefix search
+# ── Key bindings ──────────────────────────────────────────────────────
+# Up/Down — history-substring-search (PSReadLine ListView equivalent)
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+# Also wire emacs / vi-mode equivalents
+bindkey -M emacs '^P' history-substring-search-up
+bindkey -M emacs '^N' history-substring-search-down
 bindkey "^[l"  clear-screen             # Alt+L = clear
 
 # ── Misc aliases ──────────────────────────────────────────────────────
