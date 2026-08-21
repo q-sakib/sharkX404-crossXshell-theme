@@ -21,8 +21,3 @@ function load-env {
     }
 }
 
-function edit-env { code .env }
-function edit-config { code .vscode/settings.json }
-
-function myip { Invoke-RestMethod -Uri "https://ipinfo.io/json" }
-function open-url { param($url) Start-Process $url }

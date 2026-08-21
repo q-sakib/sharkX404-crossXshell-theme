@@ -1,117 +1,159 @@
-# --- Modular PowerShell Profile for Fullstack Dev ---
+# =====================================================================
+# ⚡ sharkX404 CrossShell Theme — Modular PowerShell Profile
+# Cross-platform dev environment for Windows 11+ and macOS
+# =====================================================================
 
-# 1. Load all top-level helper scripts from 'modules'
-$modulesPath = "$PSScriptRoot\modules"
-Get-ChildItem "$modulesPath\*.ps1" -ErrorAction SilentlyContinue | ForEach-Object {
-    try {
-        . $_.FullName
-        Write-Verbose "Loaded module script: $($_.Name)"
-    } catch {
-        Write-Warning "⚠️ Failed to load script: $($_.FullName) - $($_.Exception.Message)"
+# 0. Resolve repository root (handles symlinks on macOS and Windows)
+$ProfileRepoDir = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+
+if ($PSCommandPath -and (Test-Path $PSCommandPath)) {
+    $item = Get-Item $PSCommandPath -ErrorAction SilentlyContinue
+    if ($item -and $item.LinkType) {
+        $target = if ([array]$item.Target) { $item.Target[0] } else { $item.Target }
+        if (Test-Path $target) { $ProfileRepoDir = Split-Path $target -Parent }
     }
 }
 
-# 2. Explicitly load additional deep/nested scripts
+if (-not (Test-Path (Join-Path $ProfileRepoDir "Modules"))) {
+    $homePath = if ($env:HOME) { $env:HOME } else { $env:USERPROFILE }
+    foreach ($cand in @(
+        (Join-Path $homePath "--devX404/admin-shell/sharkX404-crossXshell-theme"),
+        (Join-Path $homePath "sharkX404-crossXshell-theme")
+    )) {
+        if (Test-Path (Join-Path $cand "Modules")) { $ProfileRepoDir = $cand; break }
+    }
+}
+
+$modulesPath = Join-Path $ProfileRepoDir "Modules"
+
+# 1. Load icons and platform modules first (foundation for the rest)
+foreach ($priorityMod in @("icons.ps1", "platform.ps1")) {
+    $modPath = Join-Path $modulesPath $priorityMod
+    if (Test-Path $modPath) {
+        try { . $modPath } catch {
+            Write-Warning "⚠️ Failed to load $priorityMod : $($_.Exception.Message)"
+        }
+    }
+}
+
+# 2. Load all remaining top-level module scripts
+if (Test-Path $modulesPath) {
+    Get-ChildItem -Path $modulesPath -Filter "*.ps1" -ErrorAction SilentlyContinue | ForEach-Object {
+        if ($_.Name -notin @("icons.ps1", "platform.ps1")) {
+            try {
+                . $_.FullName
+                Write-Verbose "Loaded: $($_.Name)"
+            } catch {
+                Write-Warning "⚠️ Failed to load $($_.Name): $($_.Exception.Message)"
+            }
+        }
+    }
+}
+
+# 3. Load deep/nested scripts explicitly
 $extraScripts = @(
-    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist.ps1",
-    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-Angular.ps1",
-    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-Database.ps1",
-    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-Git.ps1",
-    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-Laravel.ps1",
-    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-Node.ps1",
-    "$PSScriptRoot\modules\web\dev-checklist\DevChecklist-PowerShell.ps1",
+    "Modules/web/dev-checklist/DevChecklist.ps1",
+    "Modules/web/dev-checklist/DevChecklist-Angular.ps1",
+    "Modules/web/dev-checklist/DevChecklist-Database.ps1",
+    "Modules/web/dev-checklist/DevChecklist-Git.ps1",
+    "Modules/web/dev-checklist/DevChecklist-Laravel.ps1",
+    "Modules/web/dev-checklist/DevChecklist-Node.ps1",
+    "Modules/web/dev-checklist/DevChecklist-PowerShell.ps1",
 
+    "Modules/web/webdev.ps1",
+    "Modules/web/scripts/db/env/environment.ps1",
 
-    "$PSScriptRoot\modules\web\webdev.ps1",
-    "$PSScriptRoot\modules\web\scripts\db\env\environment.ps1",
+    "Modules/web/scripts/db/ORM/mongoose/MongoDBConnectionHelper.ps1",
+    "Modules/web/scripts/db/ORM/mongoose/MongoDBModelScaffolding.ps1",
 
-    "$PSScriptRoot\modules\web\scripts\db\ORM\mongoose\MongoDBConnectionHelper.ps1",
-    "$PSScriptRoot\modules\web\scripts\db\ORM\mongoose\MongoDBModelScaffolding.ps1",
+    "Modules/web/scripts/db/ORM/prisma/PrismaModelBoilerplate.ps1",
+    "Modules/web/scripts/db/ORM/prisma/PrismaCLIShortcuts.ps1",
 
-    "$PSScriptRoot\modules\web\scripts\db\ORM\prisma\PrismaModelBoilerplate.ps1",
-    "$PSScriptRoot\modules\web\scripts\db\ORM\prisma\PrismaCLIShortcuts.ps1",
+    "Modules/web/scripts/db/ORM/eloquent/DatabaseSeeder.ps1",
+    "Modules/web/scripts/db/ORM/eloquent/eloquent-helpers.ps1",
+    "Modules/web/scripts/db/ORM/eloquent/FactoryTemplateGenerator.ps1",
+    "Modules/web/scripts/db/ORM/eloquent/SeederwithFakerBoilerplate.ps1",
+    "Modules/web/scripts/db/ORM/eloquent/SmartFakerFieldGuesser.ps1",
+    "Modules/web/scripts/db/ORM/eloquent/Tinker-shortcut-runner.ps1",
 
-    "$PSScriptRoot\modules\web\scripts\db\ORM\eloquent\DatabaseSeeder.ps1",
-    "$PSScriptRoot\modules\web\scripts\db\ORM\eloquent\eloquent-helpers.ps1",
-    "$PSScriptRoot\modules\web\scripts\db\ORM\eloquent\FactoryTemplateGenerator.ps1",
-    "$PSScriptRoot\modules\web\scripts\db\ORM\eloquent\SeederwithFakerBoilerplate.ps1",
-    "$PSScriptRoot\modules\web\scripts\db\ORM\eloquent\SmartFakerFieldGuesser.ps1",
-    "$PSScriptRoot\modules\web\scripts\db\ORM\eloquent\Tinker-shortcut-runner.ps1",
+    "Modules/web/scripts/laravel/laravel.ps1",
+    "Modules/web/scripts/laravel/ai-test-helpers.ps1",
+    "Modules/web/scripts/laravel/api-resource-helpers.ps1",
+    "Modules/web/scripts/laravel/artisan-helpers.ps1",
+    "Modules/web/scripts/laravel/auth-helpers.ps1",
+    "Modules/web/scripts/laravel/project-init.ps1",
+    "Modules/web/scripts/laravel/test-helpers.ps1",
 
-    "$PSScriptRoot\modules\web\scripts\laravel\laravel.ps1",
-    "$PSScriptRoot\modules\web\scripts\laravel\ai-test-helpers.ps1",
-    "$PSScriptRoot\modules\web\scripts\laravel\api-resource-helpers.ps1",
-    "$PSScriptRoot\modules\web\scripts\laravel\artisan-helpers.ps1",
-    "$PSScriptRoot\modules\web\scripts\laravel\auth-helpers.ps1",
-    "$PSScriptRoot\modules\web\scripts\laravel\project-init.ps1",
-    "$PSScriptRoot\modules\web\scripts\laravel\test-helpers.ps1",
+    "Modules/web/scripts/angular.ps1",
+    "Modules/web/scripts/node-js.ps1",
+    "Modules/web/scripts/nextCLI.ps1",
+    "Modules/web/scripts/make-express-boilerplate.ps1",
+    "Modules/web/scripts/JWT-boilerplate.ps1",
 
-    "$PSScriptRoot\modules\web\scripts\angular.ps1",
-    "$PSScriptRoot\modules\web\scripts\node-js.ps1",
-    "$PSScriptRoot\modules\web\scripts\nextCLI.ps1",
-    "$PSScriptRoot\modules\web\scripts\make-express-boilerplate.ps1",
-    "$PSScriptRoot\modules\web\scripts\JWT-boilerplate.ps1",
-    "$PSScriptRoot\modules\simulation\shark\shark-session.ps1",
-    "$PSScriptRoot\modules\simulation\shark\randomnymous2.ps1"
-    # "$PSScriptRoot\modules\simulation\chaos\chaos-text.ps1"
+    "Modules/simulation/shark/shark-session.ps1",
+    "Modules/simulation/shark/randomnymous2.ps1"
 )
 
-foreach ($script in $extraScripts) {
-    if (Test-Path $script) {
+foreach ($rel in $extraScripts) {
+    $full = Join-Path $ProfileRepoDir $rel
+    if (Test-Path $full) {
         try {
-            . $script
-            Write-Verbose "Loaded extra script: $script"
+            . $full
+            Write-Verbose "Loaded extra: $rel"
         } catch {
-            Write-Warning "⚠️ Failed to load script: $script - $($_.Exception.Message)"
+            Write-Warning "⚠️ Failed to load $rel : $($_.Exception.Message)"
         }
-    } else {
-        Write-Warning "⚠️ Script not found: $script"
     }
 }
+
+# ── Function Discovery Helpers ──────────────────────────────────────
 
 function basefuncs {
+    <#
+    .SYNOPSIS
+    Lists a curated set of core utility functions defined in this profile.
+    #>
     Get-Command -CommandType Function |
-    Where-Object { $_.ScriptBlock.File -like "*PowerShell\\modules\\*" -or $_.Name -match "^(up|codehere|jsonpretty|live|dev|api|deploy|gll|grep|ff|dlog|load-env|edit-)" } |
-    Sort-Object Name |
-    Format-Table Name, @{Name="DefinedIn";Expression={$_.ScriptBlock.File}}, Description -AutoSize
+        Where-Object {
+            $_.ScriptBlock.File -like "*Modules*" -or
+            $_.Name -match "^(up|codehere|jsonpretty|live|dev|api|deploy|gll|grep|ff|dlog|load-env|edit-)"
+        } |
+        Sort-Object Name |
+        Format-Table Name, @{Name="Module";Expression={Split-Path $_.ScriptBlock.File -Leaf}} -AutoSize
 }
-function list-dev-functions {
-    Write-Host "`n🛠️  Custom CLI Functions Loaded:" -ForegroundColor Cyan
 
-    $customPaths = @(
-        "$PSScriptRoot\modules",
-        "$PSScriptRoot\modules\web\scripts"
-    ) | ForEach-Object { $_ -replace '\\', '/' }  # Normalize slashes
+function Get-DevFunctions {
+    <#
+    .SYNOPSIS
+    Lists every custom CLI function loaded from this profile's Modules directory.
+    #>
+    Write-Host "`n🛠️  Custom CLI Functions:" -ForegroundColor Cyan
 
-    $functions = Get-Command -CommandType Function | Where-Object {
+    $basePaths = @(
+        (Join-Path $ProfileRepoDir "Modules"),
+        (Join-Path $ProfileRepoDir "Modules/web/scripts")
+    ) | ForEach-Object { ($_ -replace '\\', '/').ToLower() }
+
+    $fns = Get-Command -CommandType Function | Where-Object {
         $file = $_.ScriptBlock.File
         if (-not $file) { return $false }
-
-        $normalizedFile = $file -replace '\\', '/'  # Normalize slashes for comparison
-        $customPaths | Where-Object { $normalizedFile.ToLower().StartsWith($_.ToLower()) }
+        $norm = ($file -replace '\\', '/').ToLower()
+        $basePaths | Where-Object { $norm.StartsWith($_) }
     }
 
-    if ($functions.Count -eq 0) {
-        Write-Host "⚠️  No custom CLI functions loaded from your script paths." -ForegroundColor Yellow
+    if ($fns.Count -eq 0) {
+        Write-Host "⚠️  No custom functions found." -ForegroundColor Yellow
         return
     }
 
-    foreach ($fn in $functions | Sort-Object Name) {
-        Write-Host "• $($fn.Name)" -ForegroundColor Green
+    foreach ($fn in $fns | Sort-Object Name) {
+        Write-Host "  • $($fn.Name)" -ForegroundColor Green
     }
 
-    Write-Host "`n🧭 Total: $($functions.Count) custom functions" -ForegroundColor DarkGray
-    Write-Host "🔍 Tip: Use 'Get-Help <FunctionName>' for more info." -ForegroundColor DarkGray
+    Write-Host "`n  Total: $($fns.Count) functions" -ForegroundColor DarkGray
+    Write-Host "  Tip  : Get-Help <FunctionName> for details`n" -ForegroundColor DarkGray
 }
-Set-Alias clifuncs list-dev-functions
 
+Set-Alias clifuncs Get-DevFunctions
 
-# # 3. Help message
-# Write-Host "`n💡 Terminal Ready! Try:" -ForegroundColor Cyan
-# Write-Host "  → live         # Launch live server" -ForegroundColor Gray
-# Write-Host "  → deploy-*     # Deploy to Vercel, Firebase, or Heroku" -ForegroundColor Gray
-# Write-Host "  → copilot-auth # GitHub Copilot CLI login" -ForegroundColor Gray
-# Write-Host "  → hf-login     # Hugging Face CLI login" -ForegroundColor Gray
-# Write-Host "  → api <url>    # Test REST API via httpie" -ForegroundColor Gray
-
-Write-Host "`n✅ Fullstack PowerShell loaded. Type Ctrl+R for searchable history!" -ForegroundColor Cyan
+Write-Host "`n✅ sharkX404 profile loaded  •  ghelp = git shortcuts  •  clifuncs = all functions  •  Ctrl+R = fuzzy history" -ForegroundColor Cyan

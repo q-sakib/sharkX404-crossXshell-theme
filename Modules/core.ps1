@@ -1,99 +1,82 @@
-# Core Setup: Prompt, Icons, Git, Navigation
+# =====================================================================
+# ⚙️ Core Setup: Prompt, PSReadLine, Navigation & Environment
+# =====================================================================
 
-# 💄 Load prompt theme
-oh-my-posh init pwsh --config "$env:POSH_THEMES_PATH\easy-term.omp.json" | Invoke-Expression
+# 💄 Safe Oh My Posh Prompt Initialization
+if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
+    try {
+        $themeConfig = if ($env:POSH_THEMES_PATH -and (Test-Path "$env:POSH_THEMES_PATH\easy-term.omp.json")) {
+            "$env:POSH_THEMES_PATH\easy-term.omp.json"
+        } else {
+            "easy-term"
+        }
+        oh-my-posh init pwsh --config $themeConfig | Invoke-Expression
+    } catch {
+        Write-Verbose "Oh My Posh theme fallback active."
+    }
+}
 
+# 🧠 PSReadLine Configuration
+Import-Module PSReadLine -ErrorAction SilentlyContinue
+if (Get-Command Set-PSReadLineOption -ErrorAction SilentlyContinue) {
+    try {
+        Set-PSReadLineOption -PredictionSource History -ErrorAction SilentlyContinue
+        Set-PSReadLineOption -PredictionViewStyle ListView -ErrorAction SilentlyContinue
+        Set-PSReadLineOption -EditMode Windows -ErrorAction SilentlyContinue
+        Set-PSReadLineOption -HistoryNoDuplicates:$true -ErrorAction SilentlyContinue
+        Set-PSReadLineOption -Colors @{
+            "Command"   = [ConsoleColor]::Cyan
+            "String"    = [ConsoleColor]::Yellow
+            "Operator"  = [ConsoleColor]::DarkGray
+            "Parameter" = [ConsoleColor]::Green
+        } -ErrorAction SilentlyContinue
+    } catch {}
+}
 
-# 🧠 Autosuggestions + Syntax Highlighting
-# 🔠 Syntax highlighting & suggestion
-Import-Module PSReadLine
-
-
-#from-other-terminal----start
-Set-PSReadLineOption -PredictionSource History
-Set-PSReadLineOption -PredictionViewStyle ListView
-# Import the Chocolatey Profile that contains the necessary code to enable
-# tab-completions to function for `choco`.
-# Be aware that if you are missing these lines from your profile, tab completion
-# for `choco` will not function.
-# See https://ch0.co/tab-completion for details.
+# Chocolatey tab-completion (Windows only)
 $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
-if (Test-Path($ChocolateyProfile)) {
-  Import-Module "$ChocolateyProfile"
-}
-#from-other-terminal----end
-
-
-
-
-Set-PSReadLineOption -PredictionSource History
-Set-PSReadLineOption -EditMode Windows
-Set-PSReadLineOption -Colors @{
-    "Command"   = [ConsoleColor]::Cyan
-    "String"    = [ConsoleColor]::Yellow
-    "Operator"  = [ConsoleColor]::DarkGray
-    "Parameter" = [ConsoleColor]::Green
+if (Test-Path $ChocolateyProfile) {
+    Import-Module "$ChocolateyProfile"
 }
 
-# 🧩 Icons and Git Prompt
-# Install-Module Terminal-Icons -Scope CurrentUser -Force
-# Import-Module Terminal-Icons -Force -Verbose
-# ── File Icons & Enhanced 'ls' using Eza ──
+# ── File Icons & Enhanced 'ls' using Eza (fallback to Get-ChildItem) ──
 if (Get-Command eza -ErrorAction SilentlyContinue) {
+    if (Get-Alias ls -ErrorAction SilentlyContinue) { Remove-Item Alias:ls -Force -ErrorAction SilentlyContinue }
 
-    # Remove built-in alias to allow function override
-    if (Get-Alias ls -ErrorAction SilentlyContinue) { Remove-Item Alias:ls }
-
-    # Define ls function wrapping Eza
-    Function ls {
-        param(
-            [Parameter(ValueFromRemainingArguments = $true)]
-            $args
-        )
+    function global:ls {
+        param([Parameter(ValueFromRemainingArguments = $true)]$args)
         eza --icons --git --color=auto @args
     }
-
-    # Define ll for long listing
-    Function ll {
-        param(
-            [Parameter(ValueFromRemainingArguments = $true)]
-            $args
-        )
+    function global:ll {
+        param([Parameter(ValueFromRemainingArguments = $true)]$args)
         eza --icons --git --color=auto -l @args
     }
-
-    # Define la for listing all (including hidden)
-    Function la {
-        param(
-            [Parameter(ValueFromRemainingArguments = $true)]
-            $args
-        )
+    function global:la {
+        param([Parameter(ValueFromRemainingArguments = $true)]$args)
         eza --icons --git --color=auto -a @args
     }
-
+} else {
+    if (-not (Get-Alias ls -ErrorAction SilentlyContinue)) {
+        Set-Alias ls Get-ChildItem
+    }
+    function global:ll { param([Parameter(ValueFromRemainingArguments = $true)]$args) Get-ChildItem @args }
+    function global:la { param([Parameter(ValueFromRemainingArguments = $true)]$args) Get-ChildItem -Force @args }
+    Write-Verbose "eza not found — using Get-ChildItem. Install: winget install eza-community.eza"
 }
-else {
-    Write-Host "⚠️ Eza not found. Install via: winget install eza-community.eza" -ForegroundColor Yellow
-}
 
-Import-Module posh-git
-
-# 📁 Optional: Smart directory jumping
+# 🧩 Git Prompt & Smart Jump
+Import-Module posh-git -ErrorAction SilentlyContinue
 Import-Module z -ErrorAction SilentlyContinue
 
-# Get current launch location
-$currentPath = (Get-Location).Path
-$homePath = $env:USERPROFILE
-$lastDirPath = Join-Path $homePath ".lastdir"
-
-# 📂 Manual restore of last location
+# 📂 Restore last working directory (call manually: Restore-LastLocation)
 function Restore-LastLocation {
-    $lastDirPath = Join-Path $env:USERPROFILE ".lastdir"
-    if (Test-Path $lastDirPath) {
-        $lastDir = Get-Content $lastDirPath -Raw | ForEach-Object { $_.Trim() }
+    $homePath  = if ($env:HOME) { $env:HOME } else { $env:USERPROFILE }
+    $savedPath = Join-Path $homePath ".lastdir"
+    if (Test-Path $savedPath) {
+        $lastDir = (Get-Content $savedPath -Raw -ErrorAction SilentlyContinue).Trim()
         if (-not [string]::IsNullOrWhiteSpace($lastDir) -and (Test-Path $lastDir)) {
             Set-Location $lastDir
-            Write-Host "✅ Restored last directory: $lastDir"
+            Write-Host "✅ Restored last directory: $lastDir" -ForegroundColor Green
         } else {
             Write-Warning "⚠️ Saved directory is invalid or missing."
         }
@@ -102,76 +85,18 @@ function Restore-LastLocation {
     }
 }
 
-# 💾 Save last directory on exit
+# 💾 Save last directory on shell exit
 Register-EngineEvent PowerShell.Exiting -Action {
     try {
-        $currentPath = (Get-Location).Path
-        Set-Content -Path "$env:USERPROFILE\.lastdir" -Value $currentPath -Encoding UTF8
-    } catch {
-        Write-Warning "❌ Failed to save last directory: $_"
-    }
-} | Out-Null
-
+        $homePath = if ($env:HOME) { $env:HOME } else { $env:USERPROFILE }
+        Set-Content -Path (Join-Path $homePath ".lastdir") -Value (Get-Location).Path -Encoding UTF8
+    } catch {}
+} -ErrorAction SilentlyContinue | Out-Null
 
 # 📌 Navigation shortcuts
-function up { Set-Location .. }
-function .. { Set-Location .. }
+function up  { Set-Location .. }
+function ..  { Set-Location .. }
 function ... { Set-Location ../.. }
 
-
-# 🚀 Project Functions
+# 🛠 Quick editor shortcut
 function codehere { code . }
-
-function jsonpretty {
-    param([string]$json)
-    $json | ConvertFrom-Json | ConvertTo-Json -Depth 10
-}
-
-function live { npx live-server }
-
-function dev { nodemon index.js }
-
-
-
-
-
-
-
-# 🐳 Docker Tools
-# 🧠 Help reminder
-# Write-Host "`n💡 Terminal Ready! Try:" -ForegroundColor Cyan
-# Write-Host "  → live            # Launch live server" -ForegroundColor Gray
-# Write-Host "  → deploy-*        # Deploy to Vercel, Firebase, or Heroku" -ForegroundColor Gray
-# Write-Host "  → copilot-auth    # GitHub Copilot CLI login" -ForegroundColor Gray
-# Write-Host "  → hf-login        # Hugging Face CLI login" -ForegroundColor Gray
-# Write-Host "  → api <url>       # Test REST API via httpie" -ForegroundColor Red
-# Write-Host "  → fzf             # Start fuzzy file search" -ForegroundColor Gray
-# Write-Host "  → deletehistory   # Delete selected history from search" -ForegroundColor Gray
-# Write-Host "  → basefuncs       # Show list of some custom utility functions" -ForegroundColor Gray
-# Write-Host "  → clifuncs        # Show list of all dev, test, utility & CLI functions" -ForegroundColor Gray
-
-
-
-# Write-Host "`n💡 Terminal Ready! Try:" -ForegroundColor Cyan
-
-# # Dev commands
-# Write-Host "  → live            # Launch live server" -ForegroundColor Green
-# Write-Host "  → deploy-*        # Deploy to Vercel, Firebase, or Heroku" -ForegroundColor DarkCyan
-
-# # Auth
-# Write-Host "  → copilot-auth    # GitHub Copilot CLI login" -ForegroundColor Gray
-# Write-Host "  → hf-login        # Hugging Face CLI login" -ForegroundColor White
-
-# # API / Testing
-# Write-Host "  → api <url>       # Test REST API via httpie" -ForegroundColor Green
-
-# # Tools & utilities
-# Write-Host "  → fzf             # Start fuzzy file search" -ForegroundColor DarkGray
-# Write-Host "  → deletehistory   # Delete selected history from search" -ForegroundColor Red
-
-# # Function helpers
-# Write-Host "  → basefuncs       # Show list of some custom utility functions" -ForegroundColor Blue 
-# Write-Host "  → clifuncs        # Show list of all dev, test, utility & CLI functions" -ForegroundColor Magenta 
-
-
-# ─── END PROFILE ───────────────────────────────────────────────────────
