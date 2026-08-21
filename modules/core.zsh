@@ -4,7 +4,7 @@
 
 # ── Oh My Posh — sharkX404 theme ─────────────────────────────────────
 if command -v oh-my-posh &>/dev/null; then
-    _omp_theme="${_PROFILE_DIR:-$(dirname "$(readlink ~/.zshrc 2>/dev/null || echo ~/.zshrc)")}/themes/sharkX404.omp.json"
+    _omp_theme="${_PROFILE_DIR:-$(dirname "$(readlink ~/.zshrc 2>/dev/null || echo ~/.zshrc)")}/themes/clean-detailed.omp.json"
     if [[ -f "$_omp_theme" ]]; then
         eval "$(oh-my-posh init zsh --config "$_omp_theme")"
     else
