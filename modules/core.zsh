@@ -2,9 +2,15 @@
 # ⚙️  Core — Oh My Posh, eza, zsh options, history, plugins
 # =====================================================================
 
-# ── Oh My Posh ────────────────────────────────────────────────────────
+# ── Oh My Posh — sharkX404 theme ─────────────────────────────────────
 if command -v oh-my-posh &>/dev/null; then
-    eval "$(oh-my-posh init zsh)"
+    _omp_theme="${_PROFILE_DIR:-$(dirname "$(readlink ~/.zshrc 2>/dev/null || echo ~/.zshrc)")}/themes/sharkX404.omp.json"
+    if [[ -f "$_omp_theme" ]]; then
+        eval "$(oh-my-posh init zsh --config "$_omp_theme")"
+    else
+        eval "$(oh-my-posh init zsh)"
+    fi
+    unset _omp_theme
 fi
 
 # ── eza wrappers (replaces ls) ────────────────────────────────────────
