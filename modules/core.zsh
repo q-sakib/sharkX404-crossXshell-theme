@@ -2,17 +2,6 @@
 # ⚙️  Core — Oh My Posh, eza, zsh options, history, plugins
 # =====================================================================
 
-# ── Oh My Posh — sharkX404 theme ─────────────────────────────────────
-if command -v oh-my-posh &>/dev/null; then
-    _omp_theme="${_PROFILE_DIR:-$(dirname "$(readlink ~/.zshrc 2>/dev/null || echo ~/.zshrc)")}/themes/clean-detailed.omp.json"
-    if [[ -f "$_omp_theme" ]]; then
-        eval "$(oh-my-posh init zsh --config "$_omp_theme")"
-    else
-        eval "$(oh-my-posh init zsh)"
-    fi
-    unset _omp_theme
-fi
-
 # ── eza wrappers (replaces ls) ────────────────────────────────────────
 if command -v eza &>/dev/null; then
     alias ls='eza --icons --git --color=auto'
@@ -40,22 +29,6 @@ zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*:descriptions' format '%F{cyan}── %d ──%f'
 zstyle ':completion:*:warnings' format '%F{yellow}  No matches for: %d%f'
 zstyle ':completion:*' group-name ''
-
-# ── zsh-autosuggestions — inline gray suggestion (PSReadLine InlineView) ─
-for _plugin in \
-    /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
-    /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
-    "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"; do
-    [[ -f "$_plugin" ]] && { source "$_plugin"; break; }
-done
-unset _plugin
-export ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=50
-export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#606060'
-
-# Key bindings for autosuggestions
-bindkey '^ '   autosuggest-accept          # Ctrl+Space → accept full suggestion
-bindkey '^[f'  forward-word                # Alt+F      → accept one word
 
 # ── zsh-syntax-highlighting ───────────────────────────────────────────
 # Must load AFTER compinit and AFTER all other plugins

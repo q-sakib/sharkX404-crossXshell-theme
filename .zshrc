@@ -18,15 +18,29 @@ _resolve_profile_dir() {
 _PROFILE_DIR="$(_resolve_profile_dir)"
 unset -f _resolve_profile_dir
 
-# ── 0a. zsh-autocomplete — MUST be first, before any ZLE hook ────────
+# ── 0a. Oh My Posh — init FIRST so its zle-line-init hook is registered ──
+# zsh-autocomplete (step 0b) uses add-zle-hook-widget to WRAP this hook.
+# If OMP loads after autocomplete it overwrites autocomplete's hooks instead.
+if command -v oh-my-posh &>/dev/null; then
+    _omp_theme="$_PROFILE_DIR/themes/clean-detailed.omp.json"
+    if [[ -f "$_omp_theme" ]]; then
+        eval "$(oh-my-posh init zsh --config "$_omp_theme")"
+    else
+        eval "$(oh-my-posh init zsh)"
+    fi
+    unset _omp_theme
+fi
+
+# ── 0b. zsh-autocomplete — AFTER OMP so it wraps OMP's zle-line-init ──
 # Shows a live dropdown list of up to 10 matching history entries as you type
+# Disable autosuggestions widget rebinding — conflicts with autocomplete's ZLE hooks
+export ZSH_AUTOSUGGEST_MANUAL_REBIND=1
 for _ac in \
     /opt/homebrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh \
     "$HOME/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh"; do
     [[ -f "$_ac" ]] && { source "$_ac"; break; }
 done
 unset _ac
-# Configure the live list
 zstyle ':autocomplete:*' list-lines 10
 zstyle ':autocomplete:history-search:*' list-lines 10
 zstyle ':autocomplete:history-incremental-search-*:*' list-lines 10
