@@ -7,6 +7,12 @@ PSReadLine-style history ListView, fzf fuzzy search, and 31 Git shortcuts out of
 
 ---
 
+
+<!-- git clone ...  →  git checkout native/zsh
+./starter-installer.sh     # installs everything
+./setup-profile.sh         # links ~/.zshrc, asks about simulation
+source ~/.zshrc             # or open new terminal -->
+
 ## Install on a fresh machine
 
 ### Step 1 — Clone the repo
