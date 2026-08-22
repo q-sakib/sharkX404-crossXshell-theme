@@ -66,22 +66,10 @@ _save_last_location() { echo "$PWD" > "$_last_dir_file"; }
 autoload -Uz add-zsh-hook
 add-zsh-hook zshexit _save_last_location
 
-# ── zsh-history-substring-search — Up arrow cycles through matches ────
-for _plugin in \
-    /opt/homebrew/share/zsh-history-substring-search/zsh-history-substring-search.zsh \
-    /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh \
-    "$HOME/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh"; do
-    [[ -f "$_plugin" ]] && { source "$_plugin"; break; }
-done
-unset _plugin
-HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=#1e3a5f,fg=white,bold'
-HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_NOT_FOUND='bg=#5f1e1e,fg=white,bold'
-HISTORY_SUBSTRING_SEARCH_GLOBBING_FLAGS='i'
-
 # ── Key bindings ──────────────────────────────────────────────────────
-bindkey '^[[A' history-substring-search-up    # Up   = cycle matches
-# Down = fzf inline list (handled in fzf-history.zsh)
-bindkey "^[l"  clear-screen                   # Alt+L = clear
+# Up/Down and Tab handled by zsh-autocomplete (shows live list)
+# Tab in the list → select entry   Right/End → accept inline suggestion
+bindkey "^[l"  clear-screen             # Alt+L = clear
 
 # ── Misc aliases ──────────────────────────────────────────────────────
 alias reload='source ~/.zshrc'
