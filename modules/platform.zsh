@@ -9,6 +9,9 @@ for _brew_path in /opt/homebrew/bin /opt/homebrew/sbin /usr/local/bin /usr/local
 done
 unset _brew_path
 
+# ── Composer global bin (laravel, carbon, etc.) ───────────────────────
+[[ ":$PATH:" != *":$HOME/.composer/vendor/bin:"* ]] && export PATH="$HOME/.composer/vendor/bin:$PATH"
+
 # ── Architecture detection ────────────────────────────────────────────
 _mac_arch() {
     if [[ "$(sysctl -n hw.optional.arm64 2>/dev/null)" == "1" ]]; then

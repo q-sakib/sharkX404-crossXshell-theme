@@ -26,9 +26,106 @@ autoload -Uz add-zsh-hook
 add-zsh-hook precmd _shark_flush_history
 _shark_flush_history() { fc -W 2>/dev/null; }
 
-# ── Ctrl+Up — fzf fuzzy history popup (broader search than Up/Down) ──
-# Up/Down is now handled by zsh-history-substring-search (core.zsh)
-# Ctrl+Up opens fzf with any matching entry from full history
+# ── History ListView — PSReadLine style: type → list appears below ────
+# POSTDISPLAY renders lines below the prompt — no plugin, no OMP conflict.
+# Up/Down navigate the list; Enter executes the selected entry.
+autoload -Uz add-zle-hook-widget
+
+typeset -g  _shark_lv_prev=""
+typeset -g  _shark_lv_orig=""
+typeset -ga _shark_lv_matches=()
+typeset -gi _shark_lv_sel=0
+
+_shark_lv_render() {
+    if (( ${#_shark_lv_matches} == 0 )); then
+        POSTDISPLAY=""
+        return
+    fi
+    local _pd="" _i
+    for (( _i = 1; _i <= ${#_shark_lv_matches}; _i++ )); do
+        if (( _i == _shark_lv_sel )); then
+            _pd+=$'\n\e[1;97m▶ '"${_shark_lv_matches[$_i]}"$'\e[0m'
+        else
+            _pd+=$'\n\e[90m  '"${_shark_lv_matches[$_i]}"$'\e[0m'
+        fi
+    done
+    POSTDISPLAY="$_pd"
+}
+
+_shark_lv_update() {
+    if [[ -z "$BUFFER" ]]; then
+        POSTDISPLAY=""
+        _shark_lv_prev=""
+        _shark_lv_matches=()
+        _shark_lv_sel=0
+        return
+    fi
+    [[ "$BUFFER" == "$_shark_lv_prev" ]] && return
+    _shark_lv_prev="$BUFFER"
+    _shark_lv_sel=0
+    _shark_lv_matches=("${(@f)$(fc -ln 1 2>/dev/null \
+        | grep -i -- "^${BUFFER}" \
+        | awk '{l[NR]=$0} END{for(i=NR;i>=1;i--) if(!s[l[i]]++) print l[i]}' \
+        | head -10)}")
+    _shark_lv_render
+}
+
+# Down — move selection down through list
+_shark_lv_down() {
+    if (( ${#_shark_lv_matches} == 0 )); then
+        zle down-line-or-history; return
+    fi
+    (( _shark_lv_sel == 0 )) && _shark_lv_orig="$BUFFER"
+    if (( _shark_lv_sel < ${#_shark_lv_matches} )); then
+        (( _shark_lv_sel++ ))
+    else
+        _shark_lv_sel=0
+    fi
+    if (( _shark_lv_sel == 0 )); then
+        BUFFER="$_shark_lv_orig"
+    else
+        BUFFER="${_shark_lv_matches[$_shark_lv_sel]}"
+    fi
+    CURSOR=${#BUFFER}
+    _shark_lv_prev="$BUFFER"
+    _shark_lv_render
+}
+zle -N _shark_lv_down
+bindkey '^[[B' _shark_lv_down   # Down arrow
+
+# Up — move selection up through list; fall back to substring search when empty
+_shark_lv_up() {
+    if (( ${#_shark_lv_matches} == 0 )); then
+        zle history-substring-search-up 2>/dev/null || zle up-line-or-history; return
+    fi
+    (( _shark_lv_sel == 0 )) && _shark_lv_orig="$BUFFER"
+    if (( _shark_lv_sel > 1 )); then
+        (( _shark_lv_sel-- ))
+    elif (( _shark_lv_sel == 1 )); then
+        _shark_lv_sel=0
+    else
+        _shark_lv_sel=${#_shark_lv_matches}
+    fi
+    if (( _shark_lv_sel == 0 )); then
+        BUFFER="$_shark_lv_orig"
+    else
+        BUFFER="${_shark_lv_matches[$_shark_lv_sel]}"
+    fi
+    CURSOR=${#BUFFER}
+    _shark_lv_prev="$BUFFER"
+    _shark_lv_render
+}
+zle -N _shark_lv_up
+bindkey '^[[A' _shark_lv_up   # Up arrow
+
+# Deferred: ZLE not ready at source time
+_shark_lv_init() {
+    add-zle-hook-widget line-pre-redraw _shark_lv_update
+    add-zsh-hook -d precmd _shark_lv_init
+}
+add-zsh-hook precmd _shark_lv_init
+
+# ── Ctrl+Up — fzf fuzzy history popup (broader search) ───────────────
 _shark_fzf_history_popup() {
     local query="$BUFFER"
     local selected

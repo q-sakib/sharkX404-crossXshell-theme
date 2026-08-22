@@ -31,22 +31,10 @@ if command -v oh-my-posh &>/dev/null; then
     unset _omp_theme
 fi
 
-# ── 0b. zsh-autocomplete — AFTER OMP so it wraps OMP's zle-line-init ──
-# Shows a live dropdown list of up to 10 matching history entries as you type
-# Disable autosuggestions widget rebinding — conflicts with autocomplete's ZLE hooks
-export ZSH_AUTOSUGGEST_MANUAL_REBIND=1
-for _ac in \
-    /opt/homebrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh \
-    "$HOME/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh"; do
-    [[ -f "$_ac" ]] && { source "$_ac"; break; }
-done
-unset _ac
-zstyle ':autocomplete:*' list-lines 10
-zstyle ':autocomplete:history-search:*' list-lines 10
-zstyle ':autocomplete:history-incremental-search-*:*' list-lines 10
-zstyle ':autocomplete:*' min-input 1
-zstyle ':autocomplete:*' delay 0.05
-zstyle ':autocomplete:*' recent-dirs off
+# ── 0b. Completion system ─────────────────────────────────────────────
+# compinit must run before any plugin that hooks into the completion system.
+# (Previously handled internally by zsh-autocomplete; now explicit.)
+autoload -Uz compinit && compinit
 
 # ── 1. Load foundation modules first ─────────────────────────────────
 for _mod in icons.zsh platform.zsh; do
@@ -62,10 +50,13 @@ for _mod_path in "$_PROFILE_DIR"/modules/*.zsh; do
 done
 unset _mod _mod_path _mod_name
 
-# ── 3. Run startup simulation ─────────────────────────────────────────
-_sim="$_PROFILE_DIR/simulation/shark/shark-session.zsh"
-[[ -f "$_sim" ]] && source "$_sim" && run-startup-welcome
-unset _sim
+# ── 3. Run startup simulation (respects ~/.shark_prefs) ───────────────
+[[ -f "$HOME/.shark_prefs" ]] && source "$HOME/.shark_prefs"
+if [[ "${SHARK_SIMULATION:-1}" != "0" ]]; then
+    _sim="$_PROFILE_DIR/simulation/shark/shark-session.zsh"
+    [[ -f "$_sim" ]] && source "$_sim" && run-startup-welcome
+    unset _sim
+fi
 
 # ── 4. Welcome line ───────────────────────────────────────────────────
 printf '\n\033[36m✅ sharkX404 profile loaded  •  ghelp = git shortcuts  •  clifuncs = all functions  •  Ctrl+R = fuzzy history\033[0m\n\n'

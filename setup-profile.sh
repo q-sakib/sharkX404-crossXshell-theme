@@ -31,4 +31,16 @@ ln -s "$REPO_ZSHRC" "$TARGET_ZSHRC"
 printf '\033[32m🔗 Linked: %s\033[0m\n' "$TARGET_ZSHRC"
 printf '\033[90m        ➔ %s\033[0m\n' "$REPO_ZSHRC"
 
-printf '\n\033[32m✅ Profile configured. Restart zsh or run: source ~/.zshrc\033[0m\n'
+# ── Simulation preference ─────────────────────────────────────────────
+printf '\n\033[36m🦈 Show startup simulation (shark swim + welcome screen)? [Y/n] \033[0m'
+read -r _sim_ans
+if [[ "${_sim_ans}" =~ ^[Nn]$ ]]; then
+    printf 'SHARK_SIMULATION=0\n' > "$HOME/.shark_prefs"
+    printf '\033[33m   Simulation disabled.\033[0m\n'
+    printf '\033[90m   Re-enable anytime: echo "SHARK_SIMULATION=1" > ~/.shark_prefs\033[0m\n'
+else
+    printf 'SHARK_SIMULATION=1\n' > "$HOME/.shark_prefs"
+    printf '\033[32m   ✅ Simulation enabled.\033[0m\n'
+fi
+
+printf '\n\033[32m✅ Profile configured. Open a new terminal or run: source ~/.zshrc\033[0m\n'

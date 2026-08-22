@@ -30,6 +30,25 @@ zstyle ':completion:*:descriptions' format '%F{cyan}── %d ──%f'
 zstyle ':completion:*:warnings' format '%F{yellow}  No matches for: %d%f'
 zstyle ':completion:*' group-name ''
 
+# ── zsh-autosuggestions (inline grey completions as you type) ─────────
+# ZSH_AUTOSUGGEST_MANUAL_REBIND prevents the plugin from overriding the
+# custom _shark_lv_up/_shark_lv_down ZLE bindings on every ZLE reset.
+export ZSH_AUTOSUGGEST_MANUAL_REBIND=1
+for _plugin in \
+    /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
+    /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
+    "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"; do
+    [[ -f "$_plugin" ]] && { source "$_plugin"; break; }
+done
+
+# ── zsh-history-substring-search — Up/Down fallback when no ListView ──
+for _plugin in \
+    /opt/homebrew/share/zsh-history-substring-search/zsh-history-substring-search.zsh \
+    /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh \
+    "$HOME/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh"; do
+    [[ -f "$_plugin" ]] && { source "$_plugin"; break; }
+done
+
 # ── zsh-syntax-highlighting ───────────────────────────────────────────
 # Must load AFTER compinit and AFTER all other plugins
 for _plugin in \

@@ -25,7 +25,7 @@ _pse3_filesystem_takeover() {
     local -a dirs=("/etc" "/root" "/usr/bin" "/data/archive" "/sys/core" "/home/human")
     for d in "${dirs[@]}"; do
         printf '\033[32m>>> Seizing: %s...\033[0m\n' "$d"
-        sleep $(( RANDOM % 3 + 2 ))00
+        sleep "0.$(( RANDOM % 3 + 2 ))"
         sleep 0.2
     done
     printf '\n\033[31m📁 Injecting corruption logs...\033[0m\n'

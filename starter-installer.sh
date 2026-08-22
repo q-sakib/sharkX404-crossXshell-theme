@@ -73,8 +73,9 @@ brew_install "zoxide"      "zoxide"
 brew_install "jq"          "jq"
 
 # ── zsh plugins via Homebrew ──────────────────────────────────────────
-brew install zsh-autosuggestions    2>/dev/null || true
-brew install zsh-syntax-highlighting 2>/dev/null || true
+brew install zsh-autosuggestions          2>/dev/null || true
+brew install zsh-syntax-highlighting     2>/dev/null || true
+brew install zsh-history-substring-search 2>/dev/null || true
 
 # fzf-tab (replaces default Tab completion with fzf)
 FZF_TAB_DIR="$HOME/.zsh/fzf-tab"
