@@ -1,6 +1,6 @@
 # =====================================================================
-# 🔍 fzf — History search, interactive delete, autosave
-# Ctrl+R = fzf search  |  Up (with text) = filtered list  |  hclear = multi-delete
+# 🔍 fzf + History ListView
+# As-you-type list  |  Down = navigate with fzf  |  Ctrl+R = full search
 # =====================================================================
 
 if command -v fzf &>/dev/null; then
@@ -21,10 +21,74 @@ if command -v fzf &>/dev/null; then
     '
 fi
 
-# ── Per-command history flush (equivalent to PSReadLine autosave) ─────
+# ── Per-command history flush ─────────────────────────────────────────
 autoload -Uz add-zsh-hook
 add-zsh-hook precmd _shark_flush_history
 _shark_flush_history() { fc -W 2>/dev/null; }
+
+# ── History ListView — auto-show 10 matched entries as you type ───────
+# Uses line-pre-redraw (fires after every keypress) + zsh list-choices.
+# No external plugin — native zsh completion display, no OMP conflict.
+autoload -Uz add-zle-hook-widget add-zsh-hook
+
+# Completion function: populates the list with matching history entries
+_shark_hist_listview_populate() {
+    [[ -z "$BUFFER" ]] && return
+    local -a _hist
+    _hist=("${(@f)$(fc -ln 1 2>/dev/null \
+        | grep -iF -- "$BUFFER" \
+        | awk '!x[$0]++' \
+        | tail -10 \
+        | tac)}")
+    (( ${#_hist} )) && compadd -Q -V " ↑ History" -- "${_hist[@]}"
+}
+
+# list-choices widget: triggers the completion display
+zle -C _shark_hist_show list-choices _shark_hist_listview_populate
+
+# line-pre-redraw hook: called after every keypress; updates the list
+typeset -g _shark_hist_prev_buf=""
+_shark_hist_auto_list() {
+    [[ "$BUFFER" == "$_shark_hist_prev_buf" ]] && return
+    _shark_hist_prev_buf="$BUFFER"
+    if [[ -z "$BUFFER" ]]; then
+        zle -Rc 2>/dev/null
+        return
+    fi
+    zle _shark_hist_show -w 2>/dev/null
+}
+
+# ZLE isn't ready at source time — defer hook registration to first precmd
+_shark_hist_init_hooks() {
+    add-zle-hook-widget line-pre-redraw _shark_hist_auto_list
+    add-zsh-hook -d precmd _shark_hist_init_hooks  # self-remove after first run
+}
+add-zsh-hook precmd _shark_hist_init_hooks
+
+# ── Down arrow — fzf inline list to navigate and select ───────────────
+# Press Down when buffer non-empty: fzf shows all matches, navigate + Enter
+_shark_hist_fzf_select() {
+    if [[ -n "$BUFFER" ]]; then
+        local selected
+        selected=$(fc -ln 1 2>/dev/null \
+            | grep -iF -- "$BUFFER" \
+            | awk '!x[$0]++' \
+            | tail -50 \
+            | tac \
+            | fzf --height=12 --reverse --border=rounded \
+                  --prompt="  " --no-info --no-sort \
+                  --query="$BUFFER" 2>/dev/null)
+        if [[ -n "$selected" ]]; then
+            BUFFER="$selected"
+            CURSOR=${#BUFFER}
+            zle reset-prompt
+        fi
+    else
+        zle down-line-or-history
+    fi
+}
+zle -N _shark_hist_fzf_select
+bindkey '^[[B' _shark_hist_fzf_select   # Down arrow
 
 # ── Ctrl+Up — fzf fuzzy history popup (broader search than Up/Down) ──
 # Up/Down is now handled by zsh-history-substring-search (core.zsh)
